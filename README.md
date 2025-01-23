@@ -1,1 +1,5 @@
-Este proyecto será un restaurante con empleador, ingredientes, gestion de mesas, platos etc. Confien que se pone bueno:)
+# 🐉 Dragon Restaurant - Sistema de Gestión de Restaurante
+
+## 🎯 Descripción
+Sistema de planificación inteligente para restaurantes que gestiona eventos, recursos y optimiza operaciones.
+
