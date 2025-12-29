@@ -89,7 +89,6 @@ class EventScheduler:
 
         while current_search < limit:
             # Simulamos validación básica (Mesa + Stock + Chef)
-            # Para el test, verificamos si schedule_order daría True (sin guardar)
             success, _, _ = self._dry_run_validation(order, current_search)
             if success:
                 return current_search
@@ -116,7 +115,6 @@ class EventScheduler:
     # --- MÉTODOS PRIVADOS DE APOYO ---
 
     def _dry_run_validation(self, order, start_time):
-        """Versión ligera de schedule_order para no repetir código en el buscador"""
         table = self.restaurant.tables.get(order.table_id)
         if not table: return False, "", None
         

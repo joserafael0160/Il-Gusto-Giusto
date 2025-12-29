@@ -3,9 +3,10 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import os
-# En main.py o json_handler.py
+
 if not os.path.exists("data"):
     os.makedirs("data")
+
 # Rutas
 ROOT_DIR = Path(__file__).parent
 sys.path.append(str(ROOT_DIR / "src"))
@@ -53,7 +54,7 @@ def main():
     
     st.title("🐉 El Dragón del Sabor")
     
-    # Sidebar para navegación
+
     menu = st.sidebar.radio("Navegación", ["Dashboard", "Pedidos", "Inventario"])
     
     if menu == "Dashboard":
