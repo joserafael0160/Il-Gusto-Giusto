@@ -14,8 +14,33 @@ sys.path.append(str(ROOT_DIR / "src"))
 from src.core.scheduler import EventScheduler
 from src.persistence.json_handler import JSONHandler
 from src.components.dashboard import render_resource_agenda, render_resource_status, render_event_timeline
-from src.components.order_form import render_order_creation
 
+
+def init_state():
+    if 'restaurant' not in st.session_state:
+        rest, events = JSONHandler.load_restaurant("data/restaurant_state.json")
+        
+        # --- LÓGICA DE AUTO-LIMPIEZA AL ARRANCAR ---
+        now = datetime.now()
+        
+        # 1. Por defecto, ponemos todas las mesas como libres
+        for table in rest.tables.values():
+            table.is_occupied = False
+            
+        # 2. Solo marcamos como ocupadas las que tienen eventos ACTIVOS ahora mismo
+        active_events = []
+        for event in events:
+            if event.start_time <= now <= event.end_time:
+                table = rest.tables.get(event.table_id)
+                if table: table.is_occupied = True
+                active_events.append(event)
+            elif event.end_time > now:
+                # Mantener eventos futuros en la lista, pero no ocupan la mesa todavía
+                active_events.append(event)
+        
+        st.session_state.restaurant = rest
+        st.session_state.scheduler = EventScheduler(rest)
+        st.session_state.scheduler.scheduled_events = active_events
 def save_all():
     JSONHandler.save_restaurant(
         st.session_state.restaurant,
@@ -54,32 +79,27 @@ def main():
     
     st.title("🐉 El Dragón del Sabor")
     
-
-    menu = st.sidebar.radio("Navegación", ["Dashboard", "Pedidos", "Inventario"])
+    # Sidebar optimizada
+    menu = st.sidebar.radio("Navegación", ["Dashboard", "Inventario", "Histórico"])
     
     if menu == "Dashboard":
-        # 1. Estado general (Visual)
-        render_resource_status(st.session_state.restaurant)
+        # Todo ocurre aquí ahora: Ver, Pedir y Cancelar
+        render_resource_status(st.session_state.restaurant, st.session_state.scheduler, save_all)
         
         st.divider()
-        
-        # 2. Línea de tiempo y Eliminación (Operacional)
         render_event_timeline(st.session_state.scheduler, save_all)
         
-        st.divider()
-        
-        # 3. La Agenda detallada (Requerimiento de consulta)
-        render_resource_agenda(
-            st.session_state.scheduler.scheduled_events, 
-            st.session_state.restaurant
-        )
-        
-    elif menu == "Pedidos":
-        render_order_creation(st.session_state.restaurant, st.session_state.scheduler, save_all)
-        
     elif menu == "Inventario":
-        st.write("### 🍱 Gestión de Stock")
+        st.subheader("🍱 Gestión de Stock")
+        # Podemos mejorar esto luego con una UI similar a las mesas para los ingredientes
         st.table(st.session_state.restaurant.ingredients)
+
+    elif menu == "Histórico":
+        st.subheader("📜 Órdenes Finalizadas")
+        if st.session_state.restaurant.history:
+            st.write(st.session_state.restaurant.history)
+        else:
+            st.info("Aún no hay órdenes completadas en el historial.")
 
 if __name__ == "__main__":
     main()
