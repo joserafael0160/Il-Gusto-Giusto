@@ -140,16 +140,34 @@ class EventScheduler:
         return True
 
     def _find_available_chef(self, start, end, specialty=None):
+        """Busca un chef ignorando el booleano 'is_available' y basándose solo en su agenda real."""
         for chef in self.restaurant.employees.values():
             if chef.role == EmployeeRole.CHEF:
+                # 1. Validar Especialidad (Si el plato la pide)
                 if specialty and specialty not in chef.specialties:
                     continue
-                if self._is_resource_free(chef.id, start, end, "chef"):
+                
+                # 2. Validar Agenda (¿Tiene algún evento que choque con este horario?)
+                if self._is_resource_free(chef.id, start, end, res_type="chef"):
                     return chef
+
         return None
 
+    def _is_resource_free(self, res_id, start, end, res_type="table"):
+        """
+        Comprueba si un recurso está libre en un intervalo.
+        Añadimos un pequeño margen de 1 minuto para evitar errores de precisión.
+        """
+        for evt in self.scheduled_events:
+            compare_id = evt.table_id if res_type == "table" else evt.assigned_chef_id
+            if compare_id == res_id:
+                # Lógica de solapamiento: (InicioA < FinB) AND (FinA > InicioB)
+                if start < evt.end_time and end > evt.start_time:
+                    return False
+        return True
+
     def _check_ingredients_stock(self, dishes_requested):
-        """Verifica cantidades exactas (Fix para test_inventory_depletion)"""
+        """Verifica cantidades exactas """
         for d_id, qty in dishes_requested.items():
             dish = self.restaurant.menu.get(d_id)
             if not dish: continue

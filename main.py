@@ -13,7 +13,7 @@ sys.path.append(str(ROOT_DIR / "src"))
 
 from src.core.scheduler import EventScheduler
 from src.persistence.json_handler import JSONHandler
-from src.components.dashboard import render_resource_agenda, render_resource_status, render_event_timeline
+from src.components.dashboard import render_resource_status, render_event_timeline
 
 
 def init_state():
@@ -80,7 +80,7 @@ def main():
     st.title("🐉 El Dragón del Sabor")
     
     # Sidebar optimizada
-    menu = st.sidebar.radio("Navegación", ["Dashboard", "Inventario", "Histórico"])
+    menu = st.sidebar.radio("Navegación", ["Dashboard", "Inventario"])
     
     if menu == "Dashboard":
         # Todo ocurre aquí ahora: Ver, Pedir y Cancelar
@@ -93,13 +93,5 @@ def main():
         st.subheader("🍱 Gestión de Stock")
         # Podemos mejorar esto luego con una UI similar a las mesas para los ingredientes
         st.table(st.session_state.restaurant.ingredients)
-
-    elif menu == "Histórico":
-        st.subheader("📜 Órdenes Finalizadas")
-        if st.session_state.restaurant.history:
-            st.write(st.session_state.restaurant.history)
-        else:
-            st.info("Aún no hay órdenes completadas en el historial.")
-
 if __name__ == "__main__":
     main()
