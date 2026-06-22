@@ -7,7 +7,9 @@ from src.models.restaurant import (
     EmployeeRole, ExperienceLevel
 )
 from src.core.scheduler import EventScheduler
+from src.core.constraints import ConstraintValidator, MutualExclusionConstraint, CoRequirementConstraint
 from src.persistence.json_handler import JSONHandler
+from src.services.restaurant_service import calculate_role_deficit
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -15,6 +17,7 @@ from src.persistence.json_handler import JSONHandler
 
 @pytest.fixture
 def sample_restaurant():
+    """Restaurante de prueba con ingredientes, menú, empleados y mesas."""
     r = Restaurant(name="Il Gusto Giusto Test", balance=2000.0)
 
     r.ingredients["pasta"] = Ingredient("pasta", "Pasta", 10.0, "kg", 2.0, 3.0)
@@ -118,6 +121,33 @@ class TestBasicScheduling:
         success, msg, _ = scheduler.schedule_order(order2, datetime.now() + timedelta(minutes=10))
         assert not success
 
+    def test_zero_quantity_order(self, scheduler, sample_restaurant):
+        order = Order(id="ord_zero", table_id="t1", dishes={"d1": 0})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert "plato" in msg.lower() or "selecciona" in msg.lower()
+
+    def test_does_not_assign_waiter_as_chef(self, scheduler, sample_restaurant):
+        # Solo queda el chef1 (especialidad pasta) y el waiter. El pedido d1 necesita especialidad.
+        # Pero vamos a probar un plato sin especialidad con solo waiter como chef? No, waiter no es chef.
+        # Verificar que nunca se asigna un waiter a un pedido.
+        # Creamos orden sin especialidad, debe asignar chef2 (chef sin especialidad)
+        order = Order(id="ord", table_id="t1", dishes={"d2": 1})  # d2 no requiere especialidad
+        success, _, event = scheduler.schedule_order(order, datetime.now())
+        assert success
+        assert event.assigned_chef_id != "waiter1"
+
+    def test_overlap_boundary_exact_end_start(self, scheduler, sample_restaurant):
+        # Un evento termina a las 10:00, el siguiente empieza a las 10:00 -> no hay solapamiento
+        start1 = datetime.now()
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})  # 30 min
+        scheduler.schedule_order(order1, start1)
+        # El siguiente empieza justo cuando termina el primero
+        start2 = start1 + timedelta(minutes=30)
+        order2 = Order(id="ord2", table_id="t1", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order2, start2)
+        assert success
+
 # ---------------------------------------------------------------------------
 # 2. Cancelación y liberación de recursos
 # ---------------------------------------------------------------------------
@@ -138,6 +168,18 @@ class TestCancellation:
         success, msg = scheduler.cancel_event("fake_id")
         assert not success
         assert "no encontrado" in msg.lower()
+
+    def test_cancel_future_event_liberates_resources(self, scheduler, sample_restaurant):
+        start = datetime.now() + timedelta(hours=2)
+        order = Order(id="ord_future", table_id="t1", dishes={"d1": 1})
+        success, _, event = scheduler.schedule_order(order, start)
+        assert success
+        assert sample_restaurant.tables["t1"].is_occupied
+        assert not sample_restaurant.employees["chef1"].is_available
+
+        scheduler.cancel_event(event.id)
+        assert not sample_restaurant.tables["t1"].is_occupied
+        assert sample_restaurant.employees["chef1"].is_available
 
 # ---------------------------------------------------------------------------
 # 3. Stock y restricciones
@@ -164,8 +206,7 @@ class TestStockAndConstraints:
                       customized_removals={"d1": ["pasta"]})
         sample_restaurant.ingredients["pasta"].quantity = 0.0
         success, msg, _ = scheduler.schedule_order(order, datetime.now())
-        # Aunque se quitó la pasta, no se consume; el pedido puede ser exitoso
-        assert success
+        assert success  # no se consume pasta
 
     def test_co_requirement_truffle(self, scheduler, sample_restaurant):
         sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
@@ -190,6 +231,23 @@ class TestStockAndConstraints:
         order = Order(id="ord", table_id="t1", dishes={"d1": 1, "d2": 1})
         success, msg, _ = scheduler.schedule_order(order, datetime.now())
         assert not success
+
+    def test_stock_deduction_on_multiple_orders(self, scheduler, sample_restaurant):
+        initial_pasta = sample_restaurant.ingredients["pasta"].quantity
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 2})
+        order2 = Order(id="ord2", table_id="t2", dishes={"d3": 3})
+        scheduler.schedule_order(order1, datetime.now())
+        scheduler.schedule_order(order2, datetime.now() + timedelta(minutes=40))
+        expected_pasta = initial_pasta - (0.15*2) - (0.20*3)
+        assert sample_restaurant.ingredients["pasta"].quantity == expected_pasta
+
+    def test_customized_removal_does_not_affect_stock_check(self, scheduler, sample_restaurant):
+        # Pedir d2 quitando truffle_oil, con truffle_oil agotado. Debe ser válido.
+        sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
+        order = Order(id="ord", table_id="t1", dishes={"d2": 1},
+                      customized_removals={"d2": ["truffle_oil"]})
+        success, _, _ = scheduler.schedule_order(order, datetime.now())
+        assert success
 
 # ---------------------------------------------------------------------------
 # 4. Búsqueda automática de hueco
@@ -216,13 +274,35 @@ class TestFindNextSlot:
         assert slot is not None
         assert abs((slot - datetime.now()).total_seconds()) < 10
 
+    def test_find_slot_respects_chef_specialty(self, scheduler, sample_restaurant):
+        start = datetime.now()
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        scheduler.schedule_order(order1, start)
+        order2 = Order(id="ord2", table_id="t2", dishes={"d1": 1})
+        slot = scheduler.find_next_available_slot(order2)
+        assert slot is not None
+        assert slot >= start + timedelta(minutes=30)
+
+    def test_find_slot_with_chef_busy(self, scheduler, sample_restaurant):
+        # Ocupar los dos chefs, luego buscar hueco para un pedido que requiere especialidad
+        start = datetime.now()
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})  # chef1
+        scheduler.schedule_order(order1, start)
+        order2 = Order(id="ord2", table_id="t2", dishes={"d2": 1})  # chef2 (sin especialidad)
+        scheduler.schedule_order(order2, start)
+        # Ahora buscar para otro pedido que requiere chef1
+        order3 = Order(id="ord3", table_id="t3", dishes={"d3": 1})  # requiere pasta -> chef1
+        slot = scheduler.find_next_available_slot(order3)
+        # Debe ser después de que chef1 se libere (30 min) o después de que chef2 se libere? chef2 no sirve.
+        assert slot is not None
+        assert slot >= start + timedelta(minutes=30)
+
 # ---------------------------------------------------------------------------
-# 5. Persistencia JSON (ida y vuelta) – CORREGIDO
+# 5. Persistencia JSON (ida y vuelta)
 # ---------------------------------------------------------------------------
 
 class TestPersistence:
     def test_save_load_roundtrip(self, scheduler, sample_restaurant):
-        # No añadimos transacciones extra para simplificar, solo guardamos el estado base
         test_file = "data/test_persistence_temp.json"
         JSONHandler.save_restaurant(sample_restaurant, scheduler.scheduled_events, test_file)
 
@@ -242,6 +322,48 @@ class TestPersistence:
         assert rest is None
         assert events == []
 
+    def test_persistence_with_candidates(self, sample_restaurant):
+        sample_restaurant.applicants = [
+            {
+                "name": "Test Candidate",
+                "role": EmployeeRole.CHEF,
+                "experience": ExperienceLevel.SENIOR,
+                "specialties": ["test"],
+                "daily_wage": 200.0,
+                "bio": "Test bio"
+            }
+        ]
+        test_file = "data/test_persistence_cands.json"
+        JSONHandler.save_restaurant(sample_restaurant, [], test_file)
+        loaded_rest, _ = JSONHandler.load_restaurant(test_file)
+        assert len(loaded_rest.applicants) == 1
+        assert loaded_rest.applicants[0]["name"] == "Test Candidate"
+        if os.path.exists(test_file):
+            os.remove(test_file)
+
+    def test_corrupted_json_falls_back(self, tmp_path):
+        bad_file = tmp_path / "corrupt.json"
+        bad_file.write_text("{ esto no es json")
+        rest, events = JSONHandler.load_restaurant(str(bad_file))
+        assert rest is None
+
+    def test_complex_state_persistence(self, scheduler, sample_restaurant):
+        # Crear múltiples eventos, transacciones, modificar stock
+        order1 = Order(id="o1", table_id="t1", dishes={"d1": 2})
+        order2 = Order(id="o2", table_id="t2", dishes={"d2": 1})
+        scheduler.schedule_order(order1, datetime.now())
+        scheduler.schedule_order(order2, datetime.now() + timedelta(hours=1))
+        sample_restaurant.add_transaction(-50, "Compra")
+        sample_restaurant.applicants = []
+        test_file = "data/test_complex.json"
+        JSONHandler.save_restaurant(sample_restaurant, scheduler.scheduled_events, test_file)
+        loaded_rest, loaded_events = JSONHandler.load_restaurant(test_file)
+        assert loaded_rest.balance == sample_restaurant.balance
+        assert len(loaded_events) == 2
+        assert loaded_rest.ingredients["pasta"].quantity == sample_restaurant.ingredients["pasta"].quantity
+        if os.path.exists(test_file):
+            os.remove(test_file)
+
 # ---------------------------------------------------------------------------
 # 6. Modelo de negocio y transacciones
 # ---------------------------------------------------------------------------
@@ -251,7 +373,7 @@ class TestRestaurantModel:
         initial = sample_restaurant.balance
         sample_restaurant.add_transaction(500, "Venta")
         assert sample_restaurant.balance == initial + 500
-        assert len(sample_restaurant.history) == 1  # solo la nueva, no hay inicial automática
+        assert len(sample_restaurant.history) == 1
         assert sample_restaurant.history[-1]["description"] == "Venta"
 
     def test_dish_profit_calculation(self, sample_restaurant):
@@ -271,16 +393,26 @@ class TestRestaurantModel:
         t.is_occupied = True
         assert t.is_occupied
 
+    def test_add_and_remove_dish(self, sample_restaurant):
+        new_dish = Dish("d_new", "Test Dish", 10.0, 10, {"pasta": 0.1}, ["pasta"], "test")
+        sample_restaurant.menu["d_new"] = new_dish
+        assert "d_new" in sample_restaurant.menu
+        del sample_restaurant.menu["d_new"]
+        assert "d_new" not in sample_restaurant.menu
+
+    def test_ingredient_min_quantity_alert(self, sample_restaurant):
+        ing = sample_restaurant.ingredients["pasta"]
+        ing.quantity = ing.min_quantity - 0.1
+        assert ing.quantity <= ing.min_quantity
+
 # ---------------------------------------------------------------------------
-# 7. Múltiples mesas y chefs en paralelo – CORREGIDOS
+# 7. Múltiples mesas y chefs en paralelo
 # ---------------------------------------------------------------------------
 
 class TestParallelUsage:
     def test_two_tables_independent(self, scheduler, sample_restaurant):
         start = datetime.now()
-        # d1 requiere especialidad (pasta) → solo chef1 puede
         order1 = Order(id="o1", table_id="t1", dishes={"d1": 1})
-        # d2 NO requiere especialidad → chef2 puede atenderlo
         order2 = Order(id="o2", table_id="t2", dishes={"d2": 1})
         s1, _, _ = scheduler.schedule_order(order1, start)
         s2, _, _ = scheduler.schedule_order(order2, start)
@@ -291,16 +423,89 @@ class TestParallelUsage:
 
     def test_chef_can_serve_two_tables_sequentially(self, scheduler, sample_restaurant):
         start = datetime.now()
-        order1 = Order(id="o1", table_id="t1", dishes={"d1": 1})  # 30 min
+        order1 = Order(id="o1", table_id="t1", dishes={"d1": 1})
         scheduler.schedule_order(order1, start)
-        order2 = Order(id="o2", table_id="t2", dishes={"d3": 1})   # también requiere chef1 (pasta)
+        order2 = Order(id="o2", table_id="t2", dishes={"d3": 1})
         success, _, _ = scheduler.schedule_order(order2, start + timedelta(minutes=35))
         assert success
 
     def test_chef2_can_take_non_specialty_order(self, scheduler, sample_restaurant):
-        # Plato d2 no requiere especialidad, cualquier chef libre puede tomarlo.
         order = Order(id="o", table_id="t1", dishes={"d2": 1})
         success, _, event = scheduler.schedule_order(order, datetime.now())
         assert success
-        # Solo verificamos que se haya asignado un chef, no uno en particular
         assert event.assigned_chef_id in ["chef1", "chef2"]
+
+# ---------------------------------------------------------------------------
+# 8. Servicio de personal (staffing)
+# ---------------------------------------------------------------------------
+
+class TestStaffingService:
+    def test_calculate_deficit_chef(self, sample_restaurant):
+        deficit = calculate_role_deficit(sample_restaurant, EmployeeRole.CHEF)
+        assert deficit == -1  # 2 chefs, target 1
+
+    def test_calculate_deficit_waiter(self, sample_restaurant):
+        deficit = calculate_role_deficit(sample_restaurant, EmployeeRole.WAITER)
+        assert deficit == 0
+
+    def test_deficit_no_employees(self):
+        r = Restaurant("Empty", 1000)
+        r.tables["t1"] = Table("t1", 1, 2)
+        r.tables["t2"] = Table("t2", 2, 2)
+        deficit_chef = calculate_role_deficit(r, EmployeeRole.CHEF)
+        deficit_waiter = calculate_role_deficit(r, EmployeeRole.WAITER)
+        assert deficit_chef == 1
+        assert deficit_waiter == 1
+
+    def test_deficit_with_many_tables(self):
+        r = Restaurant("Big", 5000)
+        for i in range(10):
+            r.tables[f"t{i}"] = Table(f"t{i}", i, 4)
+        # 10 mesas -> chef target = max(1, 10//3)=3, waiter target = max(1, 10//2)=5
+        deficit_c = calculate_role_deficit(r, EmployeeRole.CHEF)
+        deficit_w = calculate_role_deficit(r, EmployeeRole.WAITER)
+        assert deficit_c == 3
+        assert deficit_w == 5
+
+# ---------------------------------------------------------------------------
+# 9. Validación de constraints adicionales
+# ---------------------------------------------------------------------------
+
+class TestConstraints:
+    def test_mutual_exclusion_different_categories_ok(self):
+        c = MutualExclusionConstraint("test", "a", "b", "no mezclar")
+        dish1 = Dish("x", "X", 10, 10, {}, [], "c")
+        dish2 = Dish("y", "Y", 10, 10, {}, [], "d")
+        valid, _ = c.validate([dish1, dish2], {})
+        assert valid
+
+    def test_co_requirement_missing_ingredient(self):
+        c = CoRequirementConstraint("test", "cat", "ing1", "falta ing1")
+        dish = Dish("x", "X", 10, 10, {}, [], "cat")
+        valid, msg = c.validate([dish], {})
+        assert not valid
+
+    def test_co_requirement_ingredient_quantity_zero(self):
+        c = CoRequirementConstraint("test", "cat", "ing1", "falta ing1")
+        dish = Dish("x", "X", 10, 10, {}, [], "cat")
+        ing = Ingredient("ing1", "Ing1", 0.0, "kg", 0.1, 5.0)
+        valid, msg = c.validate([dish], {"ing1": ing})
+        assert not valid
+
+    def test_validator_with_both_constraints(self, sample_restaurant):
+        validator = ConstraintValidator()
+        dishes = [
+            sample_restaurant.menu["d2"],  # seafood
+            sample_restaurant.menu["d3"]   # cheese_heavy
+        ]
+        valid, msg = validator.validate(dishes, sample_restaurant.ingredients)
+        assert not valid
+
+    def test_add_remove_constraint_dynamically(self):
+        validator = ConstraintValidator()
+        initial_count = len(validator.constraints)
+        new_rule = MutualExclusionConstraint("test", "a", "b", "msg")
+        validator.constraints.append(new_rule)
+        assert len(validator.constraints) == initial_count + 1
+        validator.constraints.remove(new_rule)
+        assert len(validator.constraints) == initial_count

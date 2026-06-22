@@ -25,11 +25,16 @@ class EventScheduler:
             dish = self.restaurant.menu.get(dish_id)
             if not dish:
                 return False, f"Plato {dish_id} no existe", None
-            ordered_dishes_objs.append(dish)
-            if dish.prep_time > max_prep_time:
-                max_prep_time = dish.prep_time
-            if dish.requires_specialty:
-                required_specialty = dish.requires_specialty
+            if qty > 0:
+                ordered_dishes_objs.append(dish)
+                if dish.prep_time > max_prep_time:
+                    max_prep_time = dish.prep_time
+                if dish.requires_specialty:
+                    required_specialty = dish.requires_specialty
+
+        # Rechazar pedidos sin platos seleccionados
+        if not ordered_dishes_objs:
+            return False, "Debe seleccionar al menos un plato con cantidad mayor a cero.", None
 
         duration = timedelta(minutes=max_prep_time)
         end_time = start_time + duration
@@ -80,7 +85,7 @@ class EventScheduler:
         limit = current_search + timedelta(hours=24)
 
         while current_search < limit:
-            success, _, _ = self._dry_run_validation(order, current_search)
+            success, _ = self._dry_run_validation(order, current_search)
             if success:
                 return current_search
             current_search += timedelta(minutes=5)
@@ -109,13 +114,17 @@ class EventScheduler:
             return False, "Mesa inválida"
 
         ordered_dishes_objs = []
-        for dish_id in order.dishes.keys():
+        for dish_id, qty in order.dishes.items():
             dish = self.restaurant.menu.get(dish_id)
             if not dish:
                 return False, f"Plato {dish_id} no existe"
-            ordered_dishes_objs.append(dish)
+            if qty > 0:
+                ordered_dishes_objs.append(dish)
 
-        max_t = max([d.prep_time for d in ordered_dishes_objs]) if ordered_dishes_objs else 0
+        if not ordered_dishes_objs:
+            return False, "Debe seleccionar al menos un plato."
+
+        max_t = max(d.prep_time for d in ordered_dishes_objs)
         end_time = start_time + timedelta(minutes=max_t)
 
         # 1. Mesa libre
@@ -138,17 +147,6 @@ class EventScheduler:
 
         return True, ""
 
-    def find_next_available_slot(self, order: Order) -> Optional[datetime]:
-        current_search = datetime.now()
-        limit = current_search + timedelta(hours=24)
-
-        while current_search < limit:
-            success, _ = self._dry_run_validation(order, current_search)
-            if success:
-                return current_search
-            current_search += timedelta(minutes=5)
-        return None
-        
     def _is_resource_free(self, res_id: str, start: datetime, end: datetime, res_type: str = "table") -> bool:
         for evt in self.scheduled_events:
             compare_id = evt.table_id if res_type == "table" else evt.assigned_chef_id
