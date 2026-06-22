@@ -1,0 +1,84 @@
+{
+  "name": "Dragon's Flavor",
+  "balance": 10000.0,
+  "employees": {
+    "e1": {
+      "id": "e1",
+      "name": "Kenji Tanaka",
+      "role": "chef",
+      "specialties": ["sushi", "sashimi"],
+      "is_available": true,
+      "busy_until": null
+    },
+    "e2": {
+      "id": "e2",
+      "name": "Aiko Yamamoto",
+      "role": "chef",
+      "specialties": ["tempura", "teriyaki"],
+      "is_available": true,
+      "busy_until": null
+    }
+  },
+  "ingredients": {
+    "arroz": {
+      "id": "arroz",
+      "name": "Arroz Sushi",
+      "quantity": 50.0,
+      "unit": "kg",
+      "min_quantity": 10.0,
+      "price_per_unit": 2.5
+    },
+    "salmon": {
+      "id": "salmon",
+      "name": "Salmón Fresco",
+      "quantity": 20.0,
+      "unit": "kg",
+      "min_quantity": 5.0,
+      "price_per_unit": 18.0
+    },
+    "wasabi": {
+      "id": "wasabi",
+      "name": "Wasabi",
+      "quantity": 5.0,
+      "unit": "kg",
+      "min_quantity": 0.5,
+      "price_per_unit": 40.0
+    }
+  },
+  "menu": {
+    "d1": {
+      "id": "d1",
+      "name": "Sushi Deluxe",
+      "price": 24.99,
+      "prep_time": 25,
+      "ingredients": {
+        "arroz": 0.15,
+        "salmon": 0.08,
+        "wasabi": 0.01
+      },
+      "base_ingredients": ["arroz", "salmon"],
+      "category": "sushi",
+      "requires_specialty": "sushi"
+    },
+    "d2": {
+      "id": "d2",
+      "name": "Tempura Special",
+      "price": 18.99,
+      "prep_time": 20,
+      "ingredients": {
+        "salmon": 0.1,
+        "arroz": 0.1
+      },
+      "base_ingredients": ["salmon"],
+      "category": "tempura",
+      "requires_specialty": "tempura"
+    }
+  },
+  "tables": {
+    "t1": {"id": "t1", "number": 1, "capacity": 4, "is_occupied": false},
+    "t2": {"id": "t2", "number": 2, "capacity": 4, "is_occupied": false}
+  },
+  "active_orders": [],
+  "history": [],
+  "scheduled_events": []
+}

@@ -28,8 +28,7 @@ env/
 .venv/
 ENV/
 
-# Streamlit
-.streamlit/
+
 
 # OS
 .DS_Store
@@ -41,7 +40,4 @@ Thumbs.db
 *.swp
 *.swo
 
-# Data files
-*.json
-*.csv
-*.db
+

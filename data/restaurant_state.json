@@ -1,0 +1,155 @@
+{
+    "name": "Drag\u00f3n del Sabor",
+    "balance": 5000.0,
+    "employees": {
+        "e1": {
+            "id": "e1",
+            "name": "Jiro",
+            "role": "chef",
+            "specialties": [
+                "sushi",
+                "ramen"
+            ],
+            "is_available": false,
+            "busy_until": "2026-02-12T07:10:31.531776"
+        },
+        "e2": {
+            "id": "e2",
+            "name": "Kenji",
+            "role": "chef",
+            "specialties": [
+                "tempura",
+                "wok"
+            ],
+            "is_available": true,
+            "busy_until": null
+        },
+        "e3": {
+            "id": "e3",
+            "name": "Mei",
+            "role": "chef",
+            "specialties": [
+                "sushi",
+                "postres"
+            ],
+            "is_available": false,
+            "busy_until": "2026-02-12T06:53:40.456925"
+        }
+    },
+    "tables": {
+        "t1": {
+            "id": "t1",
+            "number": 1,
+            "capacity": 2,
+            "is_occupied": true
+        },
+        "t2": {
+            "id": "t2",
+            "number": 2,
+            "capacity": 2,
+            "is_occupied": true
+        },
+        "t3": {
+            "id": "t3",
+            "number": 3,
+            "capacity": 4,
+            "is_occupied": false
+        },
+        "t4": {
+            "id": "t4",
+            "number": 4,
+            "capacity": 6,
+            "is_occupied": false
+        }
+    },
+    "menu": {
+        "d1": {
+            "id": "d1",
+            "name": "Nigiri de Salm\u00f3n",
+            "price": 18.0,
+            "prep_time": 1,
+            "ingredients": {
+                "arroz": 0.1,
+                "salmon": 0.05,
+                "wasabi": 0.01
+            },
+            "base_ingredients": [
+                "arroz",
+                "salmon"
+            ],
+            "category": "sushi",
+            "requires_specialty": "sushi"
+        },
+        "d2": {
+            "id": "d2",
+            "name": "Ramen Tonkotsu",
+            "price": 22.0,
+            "prep_time": 25,
+            "ingredients": {
+                "fideos": 0.2,
+                "salmon": 0.05
+            },
+            "base_ingredients": [
+                "fideos"
+            ],
+            "category": "ramen",
+            "requires_specialty": "ramen"
+        }
+    },
+    "ingredients": {
+        "arroz": {
+            "id": "arroz",
+            "name": "Arroz Sushi",
+            "quantity": 16.49999999999997,
+            "unit": "kg",
+            "min_quantity": 2.0,
+            "price_per_unit": 5.0
+        },
+        "salmon": {
+            "id": "salmon",
+            "name": "Salm\u00f3n",
+            "quantity": 8.049999999999983,
+            "unit": "kg",
+            "min_quantity": 1.0,
+            "price_per_unit": 25.0
+        },
+        "wasabi": {
+            "id": "wasabi",
+            "name": "Wasabi",
+            "quantity": 1.6499999999999997,
+            "unit": "kg",
+            "min_quantity": 0.1,
+            "price_per_unit": 40.0
+        },
+        "fideos": {
+            "id": "fideos",
+            "name": "Fideos Ramen",
+            "quantity": 14.200000000000003,
+            "unit": "kg",
+            "min_quantity": 3.0,
+            "price_per_unit": 8.0
+        }
+    },
+    "active_orders": [],
+    "history": [],
+    "scheduled_events": [
+        {
+            "id": "evt_8fcb1f5b",
+            "order_id": "ORD-800E",
+            "table_id": "t1",
+            "assigned_chef_id": "e1",
+            "start_time": "2026-02-12T06:45:31.531776",
+            "end_time": "2026-02-12T07:10:31.531776",
+            "resource_ids": []
+        },
+        {
+            "id": "evt_b63ed21a",
+            "order_id": "ORD-8196",
+            "table_id": "t2",
+            "assigned_chef_id": "e3",
+            "start_time": "2026-02-12T06:52:40.456925",
+            "end_time": "2026-02-12T06:53:40.456925",
+            "resource_ids": []
+        }
+    ]
+}
