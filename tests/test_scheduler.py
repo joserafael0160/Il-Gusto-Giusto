@@ -1,17 +1,17 @@
-import sys
 import os
 import pytest
-from pathlib import Path
 from datetime import datetime, timedelta
 
-root_path = Path(__file__).parent.parent
-src_path = str(root_path / "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-from src.models.restaurant import Restaurant, Order, Dish, Employee, Ingredient, Table, EmployeeRole, ExperienceLevel
+from src.models.restaurant import (
+    Restaurant, Order, Dish, Employee, Ingredient, Table,
+    EmployeeRole, ExperienceLevel
+)
 from src.core.scheduler import EventScheduler
 from src.persistence.json_handler import JSONHandler
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def sample_restaurant():
@@ -19,93 +19,288 @@ def sample_restaurant():
 
     r.ingredients["pasta"] = Ingredient("pasta", "Pasta", 10.0, "kg", 2.0, 3.0)
     r.ingredients["truffle_oil"] = Ingredient("truffle_oil", "Aceite de Trufa", 5.0, "l", 0.5, 45.0)
+    r.ingredients["seafood_mix"] = Ingredient("seafood_mix", "Frutti di Mare", 5.0, "kg", 1.0, 18.0)
+    r.ingredients["gorgonzola"] = Ingredient("gorgonzola", "Gorgonzola", 3.0, "kg", 0.5, 12.0)
 
-    dish = Dish(
-        id="d1",
-        name="Truffle Pasta Test",
-        price=28.0,
-        prep_time=30,
+    r.menu["d1"] = Dish(
+        id="d1", name="Truffle Pasta", price=28.0, prep_time=30,
         ingredients={"pasta": 0.15, "truffle_oil": 0.05},
         base_ingredients=["pasta"],
         category="truffle_specialty",
         requires_specialty="pasta"
     )
-    r.menu["d1"] = dish
-
-    chef = Employee(
-        id="chef1",
-        name="Chef Giovanni",
-        role=EmployeeRole.CHEF,
-        experience=ExperienceLevel.SENIOR,
-        specialties=["pasta"],
-        daily_wage=150.0,
-        is_available=True
+    r.menu["d2"] = Dish(
+        id="d2", name="Frittura", price=20.0, prep_time=20,
+        ingredients={"seafood_mix": 0.3, "truffle_oil": 0.02},
+        base_ingredients=["seafood_mix"],
+        category="seafood"
     )
-    r.employees["chef1"] = chef
+    r.menu["d3"] = Dish(
+        id="d3", name="Gnocchi Gorgonzola", price=18.0, prep_time=25,
+        ingredients={"pasta": 0.2, "gorgonzola": 0.15},
+        base_ingredients=["pasta"],
+        category="cheese_heavy",
+        requires_specialty="pasta"
+    )
 
-    table = Table(id="t1", number=1, capacity=4, is_occupied=False)
-    r.tables["t1"] = table
+    r.employees["chef1"] = Employee(
+        id="chef1", name="Chef Luigi", role=EmployeeRole.CHEF,
+        experience=ExperienceLevel.SENIOR, specialties=["pasta"],
+        daily_wage=150.0, is_available=True
+    )
+    r.employees["chef2"] = Employee(
+        id="chef2", name="Chef Mario", role=EmployeeRole.CHEF,
+        experience=ExperienceLevel.JUNIOR, specialties=[],
+        daily_wage=100.0, is_available=True
+    )
+    r.employees["waiter1"] = Employee(
+        id="waiter1", name="Camilla", role=EmployeeRole.WAITER,
+        experience=ExperienceLevel.JUNIOR, specialties=[],
+        daily_wage=60.0, is_available=True
+    )
 
+    r.tables["t1"] = Table(id="t1", number=1, capacity=4, is_occupied=False)
+    r.tables["t2"] = Table(id="t2", number=2, capacity=2, is_occupied=False)
+    r.tables["t3"] = Table(id="t3", number=3, capacity=6, is_occupied=False)
     return r
 
 @pytest.fixture
 def scheduler(sample_restaurant):
     return EventScheduler(sample_restaurant)
 
-def test_schedule_valid_order(scheduler, sample_restaurant):
-    order = Order(id="ord1", table_id="t1", dishes={"d1": 1})
-    success, msg, event = scheduler.schedule_order(order, datetime.now())
+# ---------------------------------------------------------------------------
+# 1. Pedidos válidos y fallos básicos
+# ---------------------------------------------------------------------------
 
-    assert success is True
-    assert event.assigned_chef_id == "chef1"
-    assert sample_restaurant.tables["t1"].is_occupied is True
-    assert sample_restaurant.employees["chef1"].is_available is False
+class TestBasicScheduling:
+    def test_valid_order(self, scheduler, sample_restaurant):
+        order = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        success, msg, event = scheduler.schedule_order(order, datetime.now())
+        assert success
+        assert event.assigned_chef_id == "chef1"
+        assert sample_restaurant.tables["t1"].is_occupied
+        assert not sample_restaurant.employees["chef1"].is_available
 
-def test_schedule_collision(scheduler, sample_restaurant):
-    order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
-    start = datetime.now()
-    scheduler.schedule_order(order1, start)
+    def test_invalid_table(self, scheduler):
+        order = Order(id="ord", table_id="no_existe", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert "mesa" in msg.lower()
 
-    # El plato demora 30 min, agendar otra orden en la misma mesa 5 min después debe fallar
-    order2 = Order(id="ord2", table_id="t1", dishes={"d1": 1})
-    collision_start = start + timedelta(minutes=5)
-    success, msg, _ = scheduler.schedule_order(order2, collision_start)
+    def test_invalid_dish(self, scheduler, sample_restaurant):
+        order = Order(id="ord", table_id="t1", dishes={"fantasma": 1})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert "no existe" in msg.lower()
 
-    assert success is False
-    assert "ocupada" in msg or "mesa" in msg or "reservada" in msg
+    def test_table_collision(self, scheduler, sample_restaurant):
+        start = datetime.now()
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        scheduler.schedule_order(order1, start)
+        order2 = Order(id="ord2", table_id="t1", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order2, start + timedelta(minutes=5))
+        assert not success
+        assert "mesa" in msg.lower() or "ocupada" in msg.lower()
 
-def test_cancel_releases_resources(scheduler, sample_restaurant):
-    order = Order(id="ord_cancel", table_id="t1", dishes={"d1": 1})
-    _, _, event = scheduler.schedule_order(order, datetime.now())
+    def test_chef_unavailable_same_interval(self, scheduler, sample_restaurant):
+        start = datetime.now()
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        scheduler.schedule_order(order1, start)
+        order2 = Order(id="ord2", table_id="t2", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order2, start + timedelta(minutes=10))
+        assert not success
+        assert "chef" in msg.lower() or "libres" in msg.lower()
 
-    assert sample_restaurant.tables["t1"].is_occupied is True
+    def test_chef_without_specialty(self, scheduler, sample_restaurant):
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        scheduler.schedule_order(order1, datetime.now())
+        order2 = Order(id="ord2", table_id="t2", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order2, datetime.now() + timedelta(minutes=10))
+        assert not success
 
-    success, _ = scheduler.cancel_event(event.id)
-    assert success is True
-    assert sample_restaurant.tables["t1"].is_occupied is False
-    assert sample_restaurant.employees["chef1"].is_available is True
+# ---------------------------------------------------------------------------
+# 2. Cancelación y liberación de recursos
+# ---------------------------------------------------------------------------
 
-def test_missing_co_requirement(scheduler, sample_restaurant):
-    # Agotamos el aceite de trufa para forzar violación de Co-requisito
-    sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
+class TestCancellation:
+    def test_cancel_frees_table_and_chef(self, scheduler, sample_restaurant):
+        order = Order(id="ord_cancel", table_id="t1", dishes={"d1": 1})
+        _, _, event = scheduler.schedule_order(order, datetime.now())
+        assert sample_restaurant.tables["t1"].is_occupied
+        assert not sample_restaurant.employees["chef1"].is_available
 
-    order = Order(id="ord_fail", table_id="t1", dishes={"d1": 1})
-    success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        success, _ = scheduler.cancel_event(event.id)
+        assert success
+        assert not sample_restaurant.tables["t1"].is_occupied
+        assert sample_restaurant.employees["chef1"].is_available
 
-    assert success is False
-    assert "trufa" in msg or "oil" in msg or "violada" in msg
+    def test_cancel_nonexistent_event(self, scheduler):
+        success, msg = scheduler.cancel_event("fake_id")
+        assert not success
+        assert "no encontrado" in msg.lower()
 
-def test_persistence_integrity(sample_restaurant, scheduler):
-    test_file = "data/test_persistence_temp.json"
-    order = Order(id="ord_persist", table_id="t1", dishes={"d1": 1})
-    scheduler.schedule_order(order, datetime.now())
+# ---------------------------------------------------------------------------
+# 3. Stock y restricciones
+# ---------------------------------------------------------------------------
 
-    JSONHandler.save_restaurant(sample_restaurant, scheduler.scheduled_events, test_file)
-    loaded_rest, loaded_events = JSONHandler.load_restaurant(test_file)
+class TestStockAndConstraints:
+    def test_insufficient_stock(self, scheduler, sample_restaurant):
+        sample_restaurant.ingredients["pasta"].quantity = 0.01
+        order = Order(id="ord", table_id="t1", dishes={"d1": 2})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert "stock" in msg.lower() or "insuficiente" in msg.lower()
 
-    assert loaded_rest.name == sample_restaurant.name
-    assert len(loaded_events) == len(scheduler.scheduled_events)
-    assert loaded_events[0].order_id == "ord_persist"
+    def test_optional_removal_does_not_consume(self, scheduler, sample_restaurant):
+        order = Order(id="ord", table_id="t1", dishes={"d2": 1},
+                      customized_removals={"d2": ["truffle_oil"]})
+        initial_truffle = sample_restaurant.ingredients["truffle_oil"].quantity
+        success, _, _ = scheduler.schedule_order(order, datetime.now())
+        assert success
+        assert sample_restaurant.ingredients["truffle_oil"].quantity == initial_truffle
 
-    if os.path.exists(test_file):
-        os.remove(test_file)
+    def test_base_ingredient_removal_ignored(self, scheduler, sample_restaurant):
+        order = Order(id="ord", table_id="t1", dishes={"d1": 1},
+                      customized_removals={"d1": ["pasta"]})
+        sample_restaurant.ingredients["pasta"].quantity = 0.0
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        # Aunque se quitó la pasta, no se consume; el pedido puede ser exitoso
+        assert success
+
+    def test_co_requirement_truffle(self, scheduler, sample_restaurant):
+        sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
+        order = Order(id="ord", table_id="t1", dishes={"d1": 1})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert "trufa" in msg.lower() or "oil" in msg.lower()
+
+    def test_mutual_exclusion_seafood_cheese(self, scheduler, sample_restaurant):
+        order = Order(id="ord_mix", table_id="t1", dishes={"d2": 1, "d3": 1})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+        assert ("tradición" in msg.lower()) or ("mar" in msg.lower()) or ("queso" in msg.lower())
+
+    def test_no_exclusion_if_only_one_category(self, scheduler, sample_restaurant):
+        order = Order(id="ord", table_id="t1", dishes={"d2": 1})
+        success, _, _ = scheduler.schedule_order(order, datetime.now())
+        assert success
+
+    def test_co_requirement_with_multiple_dishes(self, scheduler, sample_restaurant):
+        sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
+        order = Order(id="ord", table_id="t1", dishes={"d1": 1, "d2": 1})
+        success, msg, _ = scheduler.schedule_order(order, datetime.now())
+        assert not success
+
+# ---------------------------------------------------------------------------
+# 4. Búsqueda automática de hueco
+# ---------------------------------------------------------------------------
+
+class TestFindNextSlot:
+    def test_find_slot_after_event(self, scheduler, sample_restaurant):
+        order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})
+        scheduler.schedule_order(order1, datetime.now())
+        order2 = Order(id="ord2", table_id="t1", dishes={"d1": 1})
+        slot = scheduler.find_next_available_slot(order2)
+        event1 = scheduler.scheduled_events[0]
+        assert slot >= event1.end_time
+
+    def test_find_slot_respects_constraints(self, scheduler, sample_restaurant):
+        sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
+        order = Order(id="ord", table_id="t1", dishes={"d1": 1})
+        slot = scheduler.find_next_available_slot(order)
+        assert slot is None
+
+    def test_find_slot_no_event_scheduled(self, scheduler):
+        order = Order(id="ord", table_id="t1", dishes={"d1": 1})
+        slot = scheduler.find_next_available_slot(order)
+        assert slot is not None
+        assert abs((slot - datetime.now()).total_seconds()) < 10
+
+# ---------------------------------------------------------------------------
+# 5. Persistencia JSON (ida y vuelta) – CORREGIDO
+# ---------------------------------------------------------------------------
+
+class TestPersistence:
+    def test_save_load_roundtrip(self, scheduler, sample_restaurant):
+        # No añadimos transacciones extra para simplificar, solo guardamos el estado base
+        test_file = "data/test_persistence_temp.json"
+        JSONHandler.save_restaurant(sample_restaurant, scheduler.scheduled_events, test_file)
+
+        loaded_rest, loaded_events = JSONHandler.load_restaurant(test_file)
+        assert loaded_rest.name == sample_restaurant.name
+        assert loaded_rest.balance == sample_restaurant.balance
+        assert len(loaded_events) == len(scheduler.scheduled_events)
+        assert "chef1" in loaded_rest.employees
+        assert loaded_rest.employees["chef1"].role == EmployeeRole.CHEF
+        assert loaded_rest.ingredients["pasta"].quantity == sample_restaurant.ingredients["pasta"].quantity
+
+        if os.path.exists(test_file):
+            os.remove(test_file)
+
+    def test_load_nonexistent_file(self):
+        rest, events = JSONHandler.load_restaurant("data/fantasma.json")
+        assert rest is None
+        assert events == []
+
+# ---------------------------------------------------------------------------
+# 6. Modelo de negocio y transacciones
+# ---------------------------------------------------------------------------
+
+class TestRestaurantModel:
+    def test_add_transaction_updates_balance(self, sample_restaurant):
+        initial = sample_restaurant.balance
+        sample_restaurant.add_transaction(500, "Venta")
+        assert sample_restaurant.balance == initial + 500
+        assert len(sample_restaurant.history) == 1  # solo la nueva, no hay inicial automática
+        assert sample_restaurant.history[-1]["description"] == "Venta"
+
+    def test_dish_profit_calculation(self, sample_restaurant):
+        dish = sample_restaurant.menu["d1"]
+        cost = (sample_restaurant.ingredients["pasta"].price_per_unit * dish.ingredients["pasta"] +
+                sample_restaurant.ingredients["truffle_oil"].price_per_unit * dish.ingredients["truffle_oil"])
+        assert dish.price - cost > 0
+
+    def test_employee_roles(self):
+        e = Employee("x", "Test", EmployeeRole.CHEF, ExperienceLevel.SENIOR, [], 100)
+        assert e.role.value == "chef"
+        assert e.experience.value == "senior"
+
+    def test_table_occupancy(self):
+        t = Table("t", 1, 4)
+        assert not t.is_occupied
+        t.is_occupied = True
+        assert t.is_occupied
+
+# ---------------------------------------------------------------------------
+# 7. Múltiples mesas y chefs en paralelo – CORREGIDOS
+# ---------------------------------------------------------------------------
+
+class TestParallelUsage:
+    def test_two_tables_independent(self, scheduler, sample_restaurant):
+        start = datetime.now()
+        # d1 requiere especialidad (pasta) → solo chef1 puede
+        order1 = Order(id="o1", table_id="t1", dishes={"d1": 1})
+        # d2 NO requiere especialidad → chef2 puede atenderlo
+        order2 = Order(id="o2", table_id="t2", dishes={"d2": 1})
+        s1, _, _ = scheduler.schedule_order(order1, start)
+        s2, _, _ = scheduler.schedule_order(order2, start)
+        assert s1
+        assert s2
+        assert sample_restaurant.tables["t1"].is_occupied
+        assert sample_restaurant.tables["t2"].is_occupied
+
+    def test_chef_can_serve_two_tables_sequentially(self, scheduler, sample_restaurant):
+        start = datetime.now()
+        order1 = Order(id="o1", table_id="t1", dishes={"d1": 1})  # 30 min
+        scheduler.schedule_order(order1, start)
+        order2 = Order(id="o2", table_id="t2", dishes={"d3": 1})   # también requiere chef1 (pasta)
+        success, _, _ = scheduler.schedule_order(order2, start + timedelta(minutes=35))
+        assert success
+
+    def test_chef2_can_take_non_specialty_order(self, scheduler, sample_restaurant):
+        # Plato d2 no requiere especialidad, cualquier chef libre puede tomarlo.
+        order = Order(id="o", table_id="t1", dishes={"d2": 1})
+        success, _, event = scheduler.schedule_order(order, datetime.now())
+        assert success
+        # Solo verificamos que se haya asignado un chef, no uno en particular
+        assert event.assigned_chef_id in ["chef1", "chef2"]

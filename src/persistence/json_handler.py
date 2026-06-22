@@ -11,35 +11,75 @@ class JSONHandler:
         def json_serial(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
-            if isinstance(obj, (EmployeeRole, ExperienceLevel)):
-                return obj.value
-            raise TypeError(f"Type {type(obj)} not serializable")
+            raise TypeError(f"Tipo no serializable: {type(obj)}")
+
+        # Empleados
+        employees_serialized = {}
+        for k, v in restaurant.employees.items():
+            employees_serialized[k] = {
+                "id": v.id,
+                "name": v.name,
+                "role": v.role.value,
+                "experience": v.experience.value,
+                "specialties": v.specialties,
+                "daily_wage": v.daily_wage,
+                "is_available": v.is_available,
+                "busy_until": v.busy_until.isoformat() if v.busy_until else None
+            }
+
+        # Candidatos: convertir enums a cadenas manualmente
+        applicants_serialized = []
+        for cand in restaurant.applicants:
+            applicants_serialized.append({
+                "name": cand["name"],
+                "role": cand["role"].value,          # ← cadena
+                "experience": cand["experience"].value,  # ← cadena
+                "specialties": cand["specialties"],
+                "daily_wage": cand["daily_wage"],
+                "bio": cand["bio"]
+            })
 
         data = {
             "name": restaurant.name,
             "balance": restaurant.balance,
-            "employees": {k: asdict(v) for k, v in restaurant.employees.items()},
+            "employees": employees_serialized,
             "tables": {k: asdict(v) for k, v in restaurant.tables.items()},
             "menu": {k: asdict(v) for k, v in restaurant.menu.items()},
             "ingredients": {k: asdict(v) for k, v in restaurant.ingredients.items()},
-            "active_orders": [asdict(o) for o in restaurant.active_orders],
             "history": restaurant.history,
-            "scheduled_events": [asdict(e) for e in scheduler_events]
+            "applicants": applicants_serialized,
+            "scheduled_events": [e.to_dict() for e in scheduler_events]
         }
 
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, default=json_serial, indent=4)
+            json.dump(data, f, default=json_serial, indent=4, ensure_ascii=False)
 
     @staticmethod
     def load_restaurant(filepath: str):
         if not os.path.exists(filepath):
             return None, []
 
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            return None, []
 
         rest = Restaurant(name=data["name"], balance=data["balance"])
         rest.history = data.get("history", [])
+
+        # Cargar applicants convirtiendo las cadenas a enums
+        applicants_loaded = []
+        for cand in data.get("applicants", []):
+            applicants_loaded.append({
+                "name": cand["name"],
+                "role": EmployeeRole(cand["role"]),           # cadena -> enum
+                "experience": ExperienceLevel(cand["experience"]),  # cadena -> enum
+                "specialties": cand["specialties"],
+                "daily_wage": cand["daily_wage"],
+                "bio": cand["bio"]
+            })
+        rest.applicants = applicants_loaded
 
         for k, v in data["employees"].items():
             busy = datetime.fromisoformat(v["busy_until"]) if v.get("busy_until") else None
@@ -55,12 +95,7 @@ class JSONHandler:
             )
 
         for k, v in data["tables"].items():
-            rest.tables[k] = Table(
-                id=v["id"],
-                number=v["number"],
-                capacity=v["capacity"],
-                is_occupied=v["is_occupied"]
-            )
+            rest.tables[k] = Table(**v)
 
         for k, v in data["menu"].items():
             rest.menu[k] = Dish(**v)

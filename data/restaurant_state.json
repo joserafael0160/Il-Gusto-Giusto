@@ -1,39 +1,41 @@
 {
-    "name": "Drag\u00f3n del Sabor",
-    "balance": 5000.0,
+    "name": "Il Gusto Giusto",
+    "balance": 28475.0,
     "employees": {
         "e1": {
             "id": "e1",
-            "name": "Jiro",
+            "name": "Giovanni Rossi",
             "role": "chef",
+            "experience": "senior",
             "specialties": [
-                "sushi",
-                "ramen"
+                "pizza",
+                "truffle_specialty"
             ],
-            "is_available": false,
-            "busy_until": "2026-02-12T07:10:31.531776"
+            "daily_wage": 150.0,
+            "is_available": true,
+            "busy_until": null
         },
         "e2": {
             "id": "e2",
-            "name": "Kenji",
+            "name": "Lucia Bianchi",
             "role": "chef",
+            "experience": "junior",
             "specialties": [
-                "tempura",
-                "wok"
+                "pasta"
             ],
+            "daily_wage": 90.0,
             "is_available": true,
             "busy_until": null
         },
         "e3": {
             "id": "e3",
-            "name": "Mei",
-            "role": "chef",
-            "specialties": [
-                "sushi",
-                "postres"
-            ],
-            "is_available": false,
-            "busy_until": "2026-02-12T06:53:40.456925"
+            "name": "Marco Esposito",
+            "role": "waiter",
+            "experience": "junior",
+            "specialties": [],
+            "daily_wage": 60.0,
+            "is_available": true,
+            "busy_until": null
         }
     },
     "tables": {
@@ -41,115 +43,300 @@
             "id": "t1",
             "number": 1,
             "capacity": 2,
-            "is_occupied": true
+            "is_occupied": false
         },
         "t2": {
             "id": "t2",
             "number": 2,
-            "capacity": 2,
-            "is_occupied": true
+            "capacity": 4,
+            "is_occupied": false
         },
         "t3": {
             "id": "t3",
             "number": 3,
-            "capacity": 4,
-            "is_occupied": false
-        },
-        "t4": {
-            "id": "t4",
-            "number": 4,
             "capacity": 6,
             "is_occupied": false
         }
     },
     "menu": {
-        "d1": {
-            "id": "d1",
-            "name": "Nigiri de Salm\u00f3n",
-            "price": 18.0,
-            "prep_time": 1,
+        "dish_c8965c": {
+            "id": "dish_c8965c",
+            "name": "m",
+            "price": 15.0,
+            "prep_time": 15,
             "ingredients": {
-                "arroz": 0.1,
-                "salmon": 0.05,
-                "wasabi": 0.01
+                "pasta": 0.1
             },
             "base_ingredients": [
-                "arroz",
-                "salmon"
+                "pasta"
             ],
-            "category": "sushi",
-            "requires_specialty": "sushi"
+            "category": "pizza",
+            "requires_specialty": null
         },
-        "d2": {
-            "id": "d2",
-            "name": "Ramen Tonkotsu",
-            "price": 22.0,
-            "prep_time": 25,
+        "dish_0ba752": {
+            "id": "dish_0ba752",
+            "name": "m",
+            "price": 15.0,
+            "prep_time": 15,
             "ingredients": {
-                "fideos": 0.2,
-                "salmon": 0.05
+                "pasta": 0.1
             },
-            "base_ingredients": [
-                "fideos"
-            ],
-            "category": "ramen",
-            "requires_specialty": "ramen"
+            "base_ingredients": [],
+            "category": "pizza",
+            "requires_specialty": null
         }
     },
     "ingredients": {
-        "arroz": {
-            "id": "arroz",
-            "name": "Arroz Sushi",
-            "quantity": 16.49999999999997,
+        "pasta": {
+            "id": "pasta",
+            "name": "Pasta Artigianale",
+            "quantity": 449.9,
             "unit": "kg",
-            "min_quantity": 2.0,
-            "price_per_unit": 5.0
+            "min_quantity": 5.0,
+            "price_per_unit": 3.0
         },
-        "salmon": {
-            "id": "salmon",
-            "name": "Salm\u00f3n",
-            "quantity": 8.049999999999983,
-            "unit": "kg",
-            "min_quantity": 1.0,
-            "price_per_unit": 25.0
+        "tomato_sauce": {
+            "id": "tomato_sauce",
+            "name": "Salsa Pomodoro",
+            "quantity": 99.6,
+            "unit": "l",
+            "min_quantity": 8.0,
+            "price_per_unit": 2.0
         },
-        "wasabi": {
-            "id": "wasabi",
-            "name": "Wasabi",
-            "quantity": 1.6499999999999997,
-            "unit": "kg",
-            "min_quantity": 0.1,
-            "price_per_unit": 40.0
-        },
-        "fideos": {
-            "id": "fideos",
-            "name": "Fideos Ramen",
-            "quantity": 14.200000000000003,
+        "mozzarella": {
+            "id": "mozzarella",
+            "name": "Mozzarella di Bufala",
+            "quantity": 15.399999999999999,
             "unit": "kg",
             "min_quantity": 3.0,
             "price_per_unit": 8.0
+        },
+        "truffle_oil": {
+            "id": "truffle_oil",
+            "name": "Olio al Tartufo",
+            "quantity": 10.0,
+            "unit": "l",
+            "min_quantity": 1.0,
+            "price_per_unit": 45.0
+        },
+        "parmigiano": {
+            "id": "parmigiano",
+            "name": "Parmigiano Reggiano",
+            "quantity": 10.0,
+            "unit": "kg",
+            "min_quantity": 2.0,
+            "price_per_unit": 15.0
+        },
+        "basil": {
+            "id": "basil",
+            "name": "Basilico Fresco",
+            "quantity": 3.92,
+            "unit": "kg",
+            "min_quantity": 0.5,
+            "price_per_unit": 10.0
         }
     },
-    "active_orders": [],
-    "history": [],
-    "scheduled_events": [
+    "history": [
         {
-            "id": "evt_8fcb1f5b",
-            "order_id": "ORD-800E",
-            "table_id": "t1",
-            "assigned_chef_id": "e1",
-            "start_time": "2026-02-12T06:45:31.531776",
-            "end_time": "2026-02-12T07:10:31.531776",
-            "resource_ids": []
+            "timestamp": "2026-06-22T13:27:23.900581",
+            "amount": 15000.0,
+            "description": "Capital Inicial de Apertura",
+            "balance_after": 30000.0
         },
         {
-            "id": "evt_b63ed21a",
-            "order_id": "ORD-8196",
-            "table_id": "t2",
-            "assigned_chef_id": "e3",
-            "start_time": "2026-02-12T06:52:40.456925",
-            "end_time": "2026-02-12T06:53:40.456925",
-            "resource_ids": []
+            "timestamp": "2026-06-22T13:27:31.158877",
+            "amount": 14.5,
+            "description": "Venta de Comanda ORD-60DC en Mesa 1",
+            "balance_after": 30014.5
+        },
+        {
+            "timestamp": "2026-06-22T13:27:39.024573",
+            "amount": 14.5,
+            "description": "Venta de Comanda ORD-9CD5 en Mesa 2",
+            "balance_after": 30029.0
+        },
+        {
+            "timestamp": "2026-06-22T13:27:56.730531",
+            "amount": 14.5,
+            "description": "Venta de Comanda ORD-889C en Mesa 1",
+            "balance_after": 30043.5
+        },
+        {
+            "timestamp": "2026-06-22T13:28:06.911059",
+            "amount": 14.5,
+            "description": "Venta de Comanda ORD-641A en Mesa 2",
+            "balance_after": 30058.0
+        },
+        {
+            "timestamp": "2026-06-22T13:28:52.047742",
+            "amount": -135.0,
+            "description": "Compra de 3.0 l de Olio al Tartufo",
+            "balance_after": 29923.0
+        },
+        {
+            "timestamp": "2026-06-22T13:28:55.905521",
+            "amount": -8.0,
+            "description": "Compra de 1.0 kg de Mozzarella di Bufala",
+            "balance_after": 29915.0
+        },
+        {
+            "timestamp": "2026-06-22T13:28:58.435079",
+            "amount": -90.0,
+            "description": "Compra de 2.0 l de Olio al Tartufo",
+            "balance_after": 29825.0
+        },
+        {
+            "timestamp": "2026-06-22T13:30:16.846490",
+            "amount": 15.0,
+            "description": "Venta de Comanda ORD-BE31 en Mesa 1",
+            "balance_after": 29840.0
+        },
+        {
+            "timestamp": "2026-06-22T13:30:26.280529",
+            "amount": 15.0,
+            "description": "Venta de Comanda ORD-6C32 en Mesa 2",
+            "balance_after": 29855.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:23.309819",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29735.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:24.919510",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29615.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:42.036200",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29495.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:43.357478",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29375.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:44.490971",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29255.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:45.515429",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29135.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:46.476605",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 29015.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:47.679195",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 28895.0
+        },
+        {
+            "timestamp": "2026-06-22T13:31:48.704694",
+            "amount": -120.0,
+            "description": "Compra de 40.0 kg de Pasta Artigianale",
+            "balance_after": 28775.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:22.661087",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28755.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:24.239587",
+            "amount": -90.0,
+            "description": "Compra de 30.0 kg de Pasta Artigianale",
+            "balance_after": 28665.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:25.954958",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28645.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:26.700463",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28625.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:27.181487",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28605.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:28.455264",
+            "amount": -90.0,
+            "description": "Compra de 30.0 kg de Pasta Artigianale",
+            "balance_after": 28515.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:30.075660",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28495.0
+        },
+        {
+            "timestamp": "2026-06-22T13:32:31.098856",
+            "amount": -20.0,
+            "description": "Compra de 10.0 l de Salsa Pomodoro",
+            "balance_after": 28475.0
         }
-    ]
+    ],
+    "applicants": [
+        {
+            "name": "Alessandro Moretti",
+            "role": "waiter",
+            "experience": "junior",
+            "specialties": [],
+            "daily_wage": 45.0,
+            "bio": "Estudiante con buena actitud, dispuesto a dar el mejor servicio de salón."
+        },
+        {
+            "name": "Giulia Ferrari",
+            "role": "waiter",
+            "experience": "senior",
+            "specialties": [],
+            "daily_wage": 80.0,
+            "bio": "Maître profesional con amplia trayectoria en hostelería gourmet."
+        },
+        {
+            "name": "Vincenzo Romano",
+            "role": "chef",
+            "experience": "senior",
+            "specialties": [
+                "pizza"
+            ],
+            "daily_wage": 150.0,
+            "bio": "Maestro Pizzaiolo napolitano certificado. Experto en hornos tradicionales."
+        },
+        {
+            "name": "Francesca Colombo",
+            "role": "chef",
+            "experience": "junior",
+            "specialties": [
+                "pasta"
+            ],
+            "daily_wage": 90.0,
+            "bio": "Apasionada de las masas frescas artesanales y salsas tradicionales."
+        }
+    ],
+    "scheduled_events": []
 }

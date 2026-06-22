@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
 
 @dataclass
 class Event:
@@ -10,7 +9,6 @@ class Event:
     assigned_chef_id: str
     start_time: datetime
     end_time: datetime
-    resource_ids: List[str] = field(default_factory=list)
 
     def to_dict(self):
         return {
@@ -19,8 +17,7 @@ class Event:
             "table_id": self.table_id,
             "assigned_chef_id": self.assigned_chef_id,
             "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat(),
-            "resource_ids": [self.table_id, self.assigned_chef_id]
+            "end_time": self.end_time.isoformat()
         }
 
     @classmethod
@@ -31,6 +28,5 @@ class Event:
             table_id=data["table_id"],
             assigned_chef_id=data["assigned_chef_id"],
             start_time=datetime.fromisoformat(data["start_time"]),
-            end_time=datetime.fromisoformat(data["end_time"]),
-            resource_ids=data.get("resource_ids", [])
+            end_time=datetime.fromisoformat(data["end_time"])
         )

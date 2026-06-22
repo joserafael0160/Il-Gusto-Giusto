@@ -1,99 +1,99 @@
-# 🐉 Dragon Restaurant - Sistema de Gestión de Restaurante
+# 🍕 Il Gusto Giusto – Sistema Inteligente de Gestión de Restaurantes
 
-## 🎯 Descripción
-Sistema de planificación inteligente para restaurantes que gestiona eventos, recursos y optimiza operaciones.
+**Planificador Inteligente de Eventos** aplicado a un restaurante italiano de alto nivel.
 
-dragon-del-sabor/
-│
-├── app/                          # Módulo principal de la aplicación
-│   ├── __init__.py
-│   ├── models/                  # Modelos de datos (clases)
-│   │   ├── __init__.py
-│   │   ├── restaurant.py       # Restaurante, Mesa, etc.
-│   │   ├── employee.py         # Empleado, Candidato
-│   │   ├── menu.py             # Plato, Ingrediente
-│   │   └── finance.py          # Transacción, Presupuesto
-│   │
-│   ├── core/                   # Lógica de negocio y simulaciones
-│   │   ├── __init__.py
-│   │   ├── simulator.py        # Motor de simulación (validaciones, restricciones)
-│   │   ├── scheduler.py        # Planificador de eventos (asignación de recursos)
-│   │   ├── constraints.py      # Restricciones personalizadas (co-requisito, exclusión)
-│   │   └── recommender.py      # Sistema de recomendación de contratación
-│   │
-│   ├── persistence/            # Persistencia de datos
-│   │   ├── __init__.py
-│   │   ├── repository.py       # Clase base para repositorios
-│   │   ├── restaurant_repo.py  # Guardar/cargar restaurante
-│   │   └── file_manager.py     # Manejo de archivos JSON
-│   │
-│   ├── ui/                     # Interfaz de usuario (Streamlit)
-│   │   ├── __init__.py
-│   │   ├── pages/              # Páginas de la aplicación
-│   │   │   ├── __init__.py
-│   │   │   ├── dashboard.py    # Panel principal (Fase 1)
-│   │   │   ├── menu.py         # Gestión de menú (Fase 2)
-│   │   │   ├── employees.py    # Empleados y contratación (Fase 3)
-│   │   │   ├── store.py        # Tienda de ingredientes (Fase 4)
-│   │   │   ├── accounting.py   # Contabilidad (Fase 5)
-│   │   │   └── settings.py     # Configuración
-│   │   │
-│   │   ├── components/         # Componentes reutilizables
-│   │   │   ├── __init__.py
-│   │   │   ├── tables.py       # Componente para mostrar mesas
-│   │   │   ├── orders.py       # Componente para pedidos
-│   │   │   └── alerts.py       # Alertas de inventario
-│   │   │
-│   │   └── utils.py            # Utilidades para la UI
-│   │
-│   ├── services/               # Servicios de aplicación
-│   │   ├── __init__.py
-│   │   ├── menu_service.py     # Lógica de negocio para menú
-│   │   ├── employee_service.py # Lógica para empleados
-│   │   └── finance_service.py  # Lógica financiera
-│   │
-│   └── utils/                  # Utilidades generales
-│       ├── __init__.py
-│       ├── helpers.py          # Funciones auxiliares
-│       └── constants.py        # Constantes del proyecto
-│
-├── data/                       # Datos persistentes
-│   ├── saved/                  # Estados guardados del restaurante
-│   │   └── restaurant.json
-│   ├── default/                # Configuraciones por defecto
-│   │   ├── initial_state.json
-│   │   ├── default_menu.json
-│   │   └── default_employees.json
-│   └── candidates/             # Candidatos para contratar (JSON)
-│       └── candidates.json
-│
-├── assets/                     # Recursos estáticos
-│   ├── images/
-│   │   ├── dishes/             # Imágenes de platos
-│   │   ├── employees/          # Fotos de empleados
-│   │   └── icons/              # Íconos de la app
-│       └── main.css
-│
-├── tests/                      # Pruebas
-│   ├── __init__.py
-│   ├── unit/
-│   │   ├── test_models.py
-│   │   ├── test_simulator.py
-│   │   └── test_constraints.py
-│   └── integration/
-│       └── test_restaurant.py
-│
-├── config/                     # Configuración de la aplicación
-│   ├── __init__.py
-│   ├── settings.py            # Configuración general
-│   └── constraints_config.py  # Configuración de restricciones (para que sean modificables)
-│
-├── scripts/                    # Scripts auxiliares
-│   ├── generate_candidates.py  # Generar candidatos aleatorios
-│   └── init_default_data.py    # Inicializar datos por defecto
-│
-├── requirements.txt            # Dependencias
-├── .gitignore
-├── README.md                   # Documentación
-├── main.py                     # Punto de entrada de Streamlit
-└── run.py                      # Script para ejecutar la aplicación (alternativo)
+## 📖 Dominio y justificación
+
+Il Gusto Giusto es un restaurante gourmet especializado en cocina italiana tradicional.  
+Los **eventos** son los **pedidos de los clientes**; los **recursos** son las **mesas**, los **chefs** y los **ingredientes**.  
+Cada pedido tiene una duración (tiempo de preparación) y consume recursos finitos que no pueden solaparse.
+
+El sistema no solo gestiona las órdenes, sino que controla todo el flujo del restaurante: menú, contrataciones, compras y finanzas, cumpliendo el modelo de planificador de eventos con restricciones personalizadas.
+
+## 🧠 Restricciones de dominio implementadas
+
+### 1. Co‑requisito (Inclusión)
+- **Categoría `truffle_specialty`** → Obliga a tener **Olio al Tartufo** en stock.  
+  _Ejemplo:_ No se puede preparar "Tagliatelle al Tartufo" si no hay aceite de trufa en la despensa.
+
+### 2. Exclusión Mutua
+- **Categoría `seafood`** no puede combinarse con **`cheese_heavy`** en el mismo pedido.  
+  _Regla cultural italiana:_ No se mezclan mariscos con quesos fuertes como el Gorgonzola.
+
+Ambas reglas están modeladas con el patrón **Strategy** (`core/constraints.py`) y se validan automáticamente al crear un pedido.
+
+## 🚀 Funcionalidades (Fases)
+
+| Fase | Pestaña | Descripción |
+|------|---------|-------------|
+| 1 | **Servicio (Dashboard)** | Ver mesas ocupadas/libres, tomar comandas, quitar ingredientes opcionales, asignar chefs automáticamente respetando especialidades y disponibilidad. |
+| 2 | **Gestión del Menú** | Añadir, editar y eliminar platos, definir ingredientes base/opcionales y categorías. |
+| 3 | **Contrataciones (Staff)** | Ver empleados activos, despedir. Bolsa de trabajo inteligente: prioriza candidatos del rol que más falta al restaurante (cálculo automático de déficit). |
+| 4 | **Compras y Suministros** | Inventario de ingredientes con alertas de stock crítico. Tienda para reabastecer, descontando del balance. Platos bloqueados si falta algún ingrediente. |
+| 5 | **Libro de Contabilidad** | Balance en tiempo real, gráfico de evolución temporal, análisis de rentabilidad por plato con consejos automáticos. |
+
+## ⏱️ Motor de planificación
+
+- **Planificar evento (`schedule_order`)**: Valida conflicto de mesas, disponibilidad de chef especializado, stock y restricciones. Si todo es correcto, crea un `Event` con intervalo de tiempo definido.
+- **Buscar hueco automático (`find_next_available_slot`)**: Analiza el calendario futuro (cada 5 minutos) hasta encontrar la primera ventana donde mesa y chef estén libres y se cumplan las condiciones.
+- **Cancelar evento**: Libera mesa y chef, revirtiendo estados.
+- **Persistencia**: Todo el estado se guarda en un archivo JSON al finalizar cada operación.
+
+## 🔧 Estructura del código (SOLID)
+
+src/
+    
+    ├── core/ → Lógica de planificación (scheduler) y restricciones.
+
+    ├── models/ → Entidades del dominio (dataclasses): Restaurant, Dish, Order, Employee…
+    
+    ├── persistence/ → Manejo de archivos JSON.
+    
+    ├── components/ → Vistas de Streamlit (UI).
+    
+    ├── services/ → Servicios de negocio puros.
+    
+    └── ui/ → Estilos y temas.
+
+
+
+- **Principio de responsabilidad única**: Cada módulo tiene una tarea bien definida.
+- **Abierto/Cerrado**: Las restricciones se añaden implementando `Constraint` sin modificar el scheduler.
+- **Sustitución de Liskov**: Las subclases de `Constraint` son intercambiables.
+- **Segregación de interfaces**: `ConstraintValidator` solo expone `validate()`.
+- **Inversión de dependencias**: `EventScheduler` depende de la abstracción `Constraint`, no de implementaciones concretas.
+
+## ▶️ Cómo ejecutar el proyecto desde cero
+
+1. Clona el repositorio e instala dependencias:
+   ```bash
+   git clone <tu-repo>
+   cd Il_Gusto_Giusto
+   pip install -r requirements.txt
+Asegúrate de que el directorio data/ contenga default_config.json (incluido en el repo).
+
+Ejecuta la aplicación:
+
+```bash 
+streamlit run main.py
+```
+La primera vez se cargará la configuración por defecto. Todas las acciones se guardan automáticamente en data/restaurant_state.json.
+
+## 🧪 Pruebas
+Ejecuta todas las pruebas con:
+
+``` bash
+pytest tests/
+```
+Verifica: creación de eventos, colisiones, liberación de recursos, violación de restricciones, co‑requisitos y persistencia.
+
+## 🎨 Personalización visual
+La interfaz utiliza la fuente Playfair Display y una paleta granate/oro para recordar la elegancia italiana.
+Se aplica mediante CSS inyectado en src/ui/styles.py usando únicamente Streamlit.
+
+## 📦 Tecnologías permitidas
+- Python 3.10+
+- Streamlit
+- Pytest
+- pandas
+

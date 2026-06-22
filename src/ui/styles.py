@@ -31,10 +31,6 @@ def init_state():
             st.error("No se encontraron configuraciones base en el directorio data/.")
             return
 
-        # Registrar capital inicial si el historial está vacío
-        if not rest.history:
-            rest.add_transaction(rest.balance, "Capital Inicial de Apertura")
-
         now = datetime.now()
         active_events = []
         for event in events:

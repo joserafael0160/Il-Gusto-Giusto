@@ -17,7 +17,6 @@ class EventScheduler:
         if not table:
             return False, "Mesa inválida", None
 
-        # Determinar el plato más lento para calcular duración y chef idóneo
         max_prep_time = 0
         required_specialty = None
         ordered_dishes_objs: List[Dish] = []
@@ -35,26 +34,26 @@ class EventScheduler:
         duration = timedelta(minutes=max_prep_time)
         end_time = start_time + duration
 
-        # 1. Comprobar colisión de intervalo en la mesa
+        # 1. Colisión de mesa
         if not self._is_resource_free(table.id, start_time, end_time, "table"):
             return False, f"La mesa {table.number} ya está reservada u ocupada en ese intervalo.", None
 
-        # 2. Comprobar restricciones del dominio
+        # 2. Restricciones del dominio
         valid, msg = self.validator.validate(ordered_dishes_objs, self.restaurant.ingredients)
         if not valid:
             return False, msg, None
 
-        # 3. Comprobar stock (considerando opcionales eliminados)
+        # 3. Stock (considerando opcionales)
         stock_ok, stock_msg = self._check_ingredients_stock(order)
         if not stock_ok:
             return False, stock_msg, None
 
-        # 4. Encontrar Chef con la especialidad libre en el intervalo
+        # 4. Chef calificado libre
         chef = self._find_available_chef(start_time, end_time, required_specialty)
         if not chef:
             return False, "No hay chefs calificados o libres para preparar este pedido en el horario solicitado.", None
 
-        # 5. ÉXITO: Descontar stock, crear Evento y actualizar estados
+        # 5. Éxito: descontar stock, crear evento, actualizar estados
         self._subtract_stock(order)
 
         event = Event(
@@ -71,17 +70,12 @@ class EventScheduler:
         chef.busy_until = end_time
         table.is_occupied = True
 
-        # Cobrar e ingresar dinero (Fase 5)
         revenue = sum(self.restaurant.menu[d_id].price * qty for d_id, qty in order.dishes.items())
         self.restaurant.add_transaction(revenue, f"Venta de Comanda {order.id} en Mesa {table.number}")
 
         return True, "Pedido agendado y cocinado exitosamente.", event
 
     def find_next_available_slot(self, order: Order) -> Optional[datetime]:
-        """
-        Buscador de huecos inteligente: analiza el calendario a futuro 
-        probando cada 5 minutos hasta hallar disponibilidad mutua de mesa y chef.
-        """
         current_search = datetime.now()
         limit = current_search + timedelta(hours=24)
 
@@ -109,31 +103,56 @@ class EventScheduler:
         self.scheduled_events.remove(event)
         return True, "Evento cancelado y recursos liberados."
 
-    def _dry_run_validation(self, order: Order, start_time: datetime) -> Tuple[bool, str, Optional[Event]]:
+    def _dry_run_validation(self, order: Order, start_time: datetime) -> Tuple[bool, str]:
         table = self.restaurant.tables.get(order.table_id)
         if not table:
-            return False, "", None
+            return False, "Mesa inválida"
 
-        max_t = max([self.restaurant.menu[d].prep_time for d in order.dishes if d in self.restaurant.menu] or [0])
+        ordered_dishes_objs = []
+        for dish_id in order.dishes.keys():
+            dish = self.restaurant.menu.get(dish_id)
+            if not dish:
+                return False, f"Plato {dish_id} no existe"
+            ordered_dishes_objs.append(dish)
+
+        max_t = max([d.prep_time for d in ordered_dishes_objs]) if ordered_dishes_objs else 0
         end_time = start_time + timedelta(minutes=max_t)
 
+        # 1. Mesa libre
         if not self._is_resource_free(table.id, start_time, end_time, "table"):
-            return False, "", None
+            return False, "Mesa ocupada en ese intervalo"
 
+        # 2. Restricciones del dominio
+        valid, msg = self.validator.validate(ordered_dishes_objs, self.restaurant.ingredients)
+        if not valid:
+            return False, msg
+
+        # 3. Stock suficiente
         if not self._check_ingredients_stock(order)[0]:
-            return False, "", None
+            return False, "Stock insuficiente"
 
-        spec = next((self.restaurant.menu[d].requires_specialty for d in order.dishes if d in self.restaurant.menu and self.restaurant.menu[d].requires_specialty), None)
+        # 4. Chef disponible
+        spec = next((d.requires_specialty for d in ordered_dishes_objs if d.requires_specialty), None)
         if not self._find_available_chef(start_time, end_time, spec):
-            return False, "", None
+            return False, "Sin chef calificado libre"
 
-        return True, "", None
+        return True, ""
 
+    def find_next_available_slot(self, order: Order) -> Optional[datetime]:
+        current_search = datetime.now()
+        limit = current_search + timedelta(hours=24)
+
+        while current_search < limit:
+            success, _ = self._dry_run_validation(order, current_search)
+            if success:
+                return current_search
+            current_search += timedelta(minutes=5)
+        return None
+        
     def _is_resource_free(self, res_id: str, start: datetime, end: datetime, res_type: str = "table") -> bool:
         for evt in self.scheduled_events:
             compare_id = evt.table_id if res_type == "table" else evt.assigned_chef_id
             if compare_id == res_id:
-                # Comprobación matemática de solapamiento de intervalos
                 if start < evt.end_time and end > evt.start_time:
                     return False
         return True
@@ -156,7 +175,7 @@ class EventScheduler:
             removed = order.customized_removals.get(dish_id, [])
             for ing_id, amt in dish.ingredients.items():
                 if ing_id in removed:
-                    continue  # Si fue removido por el cliente, no se consume
+                    continue
                 needed[ing_id] = needed.get(ing_id, 0.0) + (amt * qty)
 
         for ing_id, qty_needed in needed.items():

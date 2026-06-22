@@ -55,7 +55,6 @@ class Order:
     id: str
     table_id: str
     dishes: Dict[str, int]  # dish_id -> cantidad
-    # Almacena ingredientes opcionales omitidos: dish_id -> [lista de ing_id omitidos]
     customized_removals: Dict[str, List[str]] = field(default_factory=dict)
 
 class Restaurant:
@@ -66,10 +65,8 @@ class Restaurant:
         self.tables: Dict[str, Table] = {}
         self.menu: Dict[str, Dish] = {}
         self.ingredients: Dict[str, Ingredient] = {}
-        self.history: List[Dict[str, Any]] = []  # Historial transaccional
-        self.active_orders: List[Order] = []
-
-        self.add_transaction(balance, "Capital Inicial de Apertura")
+        self.history: List[Dict[str, Any]] = []
+        self.applicants: List[Dict[str, Any]] = []   # bolsa de empleo persistente
 
     def add_transaction(self, amount: float, description: str):
         self.balance += amount
