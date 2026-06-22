@@ -79,6 +79,10 @@ def main():
     
     st.title("🐉 El Dragón del Sabor")
     
+
+
+
+
     # Sidebar optimizada
     menu = st.sidebar.radio("Navegación", ["Dashboard", "Inventario"])
     
@@ -95,3 +99,6 @@ def main():
         st.table(st.session_state.restaurant.ingredients)
 if __name__ == "__main__":
     main()
+
+
+
