@@ -10,7 +10,7 @@ class Event:
     assigned_chef_id: str
     start_time: datetime
     end_time: datetime
-    resource_ids: List[str] = field(default_factory=list) # Lista de IDs bloqueados
+    resource_ids: List[str] = field(default_factory=list)
 
     def to_dict(self):
         return {

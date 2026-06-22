@@ -12,4 +12,5 @@ Una tercera pestaña que sea como para mostrar los empleados que trabajan en el 
 ## Fase 4
 Una cuarta pestaña que sea como una tienda en la cual se puedan comprar los ingredientes de las comidas y así. En este punto habría que crear un sistema de alertas para que cuando el restaurante se esté quedando sin ingredientes para las comidas, le advierta al usuario para que vaya a comprar, sino se le bloqueará la comida especifica a los clientes como en la fase 1
 # Fase 5
+\end{figure}
 Una quinta pestaña que sea como el sistema de contabilidad del restaurante, la idea es que tú inicias con un dinero para el restaurante y tal pero a medida que avanza tu restaurante, contrata trabajadores, compra ingredientes etc, ese dinero sube (vendiendo platos) o baja, ahora el punto de si con el precio de tus platos el restaurante es rentable o no lo dice esta pestaña, así como graficas del dinero a lo largo del tiempo del restaurante. 

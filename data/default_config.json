@@ -1,82 +1,122 @@
 {
-  "name": "Dragon's Flavor",
-  "balance": 10000.0,
+  "name": "Il Gusto Giusto",
+  "balance": 15000.0,
   "employees": {
     "e1": {
       "id": "e1",
-      "name": "Kenji Tanaka",
+      "name": "Giovanni Rossi",
       "role": "chef",
-      "specialties": ["sushi", "sashimi"],
+      "experience": "senior",
+      "specialties": ["pizza", "truffle_specialty"],
+      "daily_wage": 150.0,
       "is_available": true,
       "busy_until": null
     },
     "e2": {
       "id": "e2",
-      "name": "Aiko Yamamoto",
+      "name": "Lucia Bianchi",
       "role": "chef",
-      "specialties": ["tempura", "teriyaki"],
+      "experience": "junior",
+      "specialties": ["pasta"],
+      "daily_wage": 90.0,
+      "is_available": true,
+      "busy_until": null
+    },
+    "e3": {
+      "id": "e3",
+      "name": "Marco Esposito",
+      "role": "waiter",
+      "experience": "junior",
+      "specialties": [],
+      "daily_wage": 60.0,
       "is_available": true,
       "busy_until": null
     }
   },
   "ingredients": {
-    "arroz": {
-      "id": "arroz",
-      "name": "Arroz Sushi",
-      "quantity": 50.0,
-      "unit": "kg",
-      "min_quantity": 10.0,
-      "price_per_unit": 2.5
-    },
-    "salmon": {
-      "id": "salmon",
-      "name": "Salmón Fresco",
-      "quantity": 20.0,
+    "pasta": {
+      "id": "pasta",
+      "name": "Pasta Artigianale",
+      "quantity": 30.0,
       "unit": "kg",
       "min_quantity": 5.0,
-      "price_per_unit": 18.0
+      "price_per_unit": 3.0
     },
-    "wasabi": {
-      "id": "wasabi",
-      "name": "Wasabi",
+    "tomato_sauce": {
+      "id": "tomato_sauce",
+      "name": "Salsa Pomodoro",
+      "quantity": 40.0,
+      "unit": "l",
+      "min_quantity": 8.0,
+      "price_per_unit": 2.0
+    },
+    "mozzarella": {
+      "id": "mozzarella",
+      "name": "Mozzarella di Bufala",
+      "quantity": 15.0,
+      "unit": "kg",
+      "min_quantity": 3.0,
+      "price_per_unit": 8.0
+    },
+    "truffle_oil": {
+      "id": "truffle_oil",
+      "name": "Olio al Tartufo",
       "quantity": 5.0,
+      "unit": "l",
+      "min_quantity": 1.0,
+      "price_per_unit": 45.0
+    },
+    "parmigiano": {
+      "id": "parmigiano",
+      "name": "Parmigiano Reggiano",
+      "quantity": 10.0,
+      "unit": "kg",
+      "min_quantity": 2.0,
+      "price_per_unit": 15.0
+    },
+    "basil": {
+      "id": "basil",
+      "name": "Basilico Fresco",
+      "quantity": 4.0,
       "unit": "kg",
       "min_quantity": 0.5,
-      "price_per_unit": 40.0
+      "price_per_unit": 10.0
     }
   },
   "menu": {
     "d1": {
       "id": "d1",
-      "name": "Sushi Deluxe",
-      "price": 24.99,
-      "prep_time": 25,
+      "name": "Pizza Margherita",
+      "price": 14.5,
+      "prep_time": 15,
       "ingredients": {
-        "arroz": 0.15,
-        "salmon": 0.08,
-        "wasabi": 0.01
+        "tomato_sauce": 0.1,
+        "mozzarella": 0.15,
+        "basil": 0.02
       },
-      "base_ingredients": ["arroz", "salmon"],
-      "category": "sushi",
-      "requires_specialty": "sushi"
+      "base_ingredients": ["tomato_sauce"],
+      "category": "pizza",
+      "requires_specialty": "pizza"
     },
     "d2": {
       "id": "d2",
-      "name": "Tempura Special",
-      "price": 18.99,
+      "name": "Tagliatelle al Tartufo",
+      "price": 28.0,
       "prep_time": 20,
       "ingredients": {
-        "salmon": 0.1,
-        "arroz": 0.1
+        "pasta": 0.15,
+        "truffle_oil": 0.05,
+        "parmigiano": 0.05
       },
-      "base_ingredients": ["salmon"],
-      "category": "tempura",
-      "requires_specialty": "tempura"
+      "base_ingredients": ["pasta"],
+      "category": "truffle_specialty",
+      "requires_specialty": "truffle_specialty"
     }
   },
   "tables": {
-    "t1": {"id": "t1", "number": 1, "capacity": 4, "is_occupied": false},
-    "t2": {"id": "t2", "number": 2, "capacity": 4, "is_occupied": false}
+    "t1": {"id": "t1", "number": 1, "capacity": 2, "is_occupied": false},
+    "t2": {"id": "t2", "number": 2, "capacity": 4, "is_occupied": false},
+    "t3": {"id": "t3", "number": 3, "capacity": 6, "is_occupied": false}
   },
   "active_orders": [],
   "history": [],

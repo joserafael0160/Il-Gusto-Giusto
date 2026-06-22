@@ -1,70 +1,77 @@
-from typing import List, Tuple, Dict
-from src.models.restaurant import Dish
+from abc import ABC, abstractmethod
+from typing import List, Dict, Tuple
+from src.models.restaurant import Dish, Ingredient
+
+class Constraint(ABC):
+    @abstractmethod
+    def validate(self, dishes: List[Dish], ingredients: Dict[str, Ingredient]) -> Tuple[bool, str]:
+        """Retorna (EsValido, Mensaje)"""
+        pass
+
+class CoRequirementConstraint(Constraint):
+    """
+    Regla de Co-requisito (Inclusión):
+    Si se detecta un plato de cierta categoría, se exige que exista un ingrediente complementario en stock.
+    """
+    def __init__(self, name: str, trigger_category: str, required_ingredient_id: str, message: str):
+        self.name = name
+        self.trigger_category = trigger_category
+        self.required_ingredient_id = required_ingredient_id
+        self.message = message
+
+    def validate(self, dishes: List[Dish], ingredients: Dict[str, Ingredient]) -> Tuple[bool, str]:
+        for dish in dishes:
+            if dish.category == self.trigger_category:
+                ing = ingredients.get(self.required_ingredient_id)
+                if not ing or ing.quantity <= 0:
+                    return False, f"Regla violada ({self.name}): {self.message}"
+        return True, ""
+
+class MutualExclusionConstraint(Constraint):
+    """
+    Regla de Exclusión Mutua:
+    No se permite que convivan ciertas categorías de platos en un mismo pedido.
+    """
+    def __init__(self, name: str, category_a: str, category_b: str, message: str):
+        self.name = name
+        self.category_a = category_a
+        self.category_b = category_b
+        self.message = message
+
+    def validate(self, dishes: List[Dish], ingredients: Dict[str, Ingredient]) -> Tuple[bool, str]:
+        categories = {dish.category for dish in dishes}
+        if self.category_a in categories and self.category_b in categories:
+            return False, f"Regla violada ({self.name}): {self.message}"
+        return True, ""
 
 class ConstraintValidator:
-    """
-    Gestiona las reglas de negocio personalizadas:
-    1. Co-requisitos (Si pides A, necesitas B)
-    2. Exclusión Mutua (No puedes pedir A y B juntos)
-    """
     def __init__(self):
-        self.co_requirements = []
-        self.mutual_exclusions = []
-        # Inicializamos reglas por defecto (esto podría venir de config)
+        self.constraints: List[Constraint] = []
         self._init_default_rules()
 
     def _init_default_rules(self):
-        # Regla 1: Sushi requiere Chef especialista y Wasabi
-        self.add_co_requirement(
-            "Sushi Standard",
-            lambda dish: dish.category == "sushi",
-            "wasabi",
-            "Los platos de Sushi requieren Wasabi fresco."
+        # 1. Exclusión Mutua: Tradición italiana (No mezclar mariscos con quesos pesados)
+        self.constraints.append(
+            MutualExclusionConstraint(
+                name="Tradición Italiana (Mar & Queso)",
+                category_a="seafood",
+                category_b="cheese_heavy",
+                message="No se permite ordenar mariscos y platos con base láctea pesada (Gorgonzola/Cacio) en el mismo pedido por etiqueta culinaria."
+            )
         )
-        
-        # Regla 2: Exclusión Sashimi vs Tempura (Ejemplo de tu idea)
-        self.add_mutual_exclusion(
-            "Choque Térmico",
-            "sashimi",
-            "tempura",
-            "No se recomienda servir Sashimi (crudo) y Tempura (frito) simultáneamente por tiempos de servicio."
+        # 2. Co-requisito: Los platos con trufa requieren Aceite de Trufa en el stock
+        self.constraints.append(
+            CoRequirementConstraint(
+                name="Soporte de Trufa",
+                trigger_category="truffle_specialty",
+                required_ingredient_id="truffle_oil",
+                message="Los platos de especialidad con Trufa requieren que haya Aceite de Trufa en la despensa."
+            )
         )
 
-    def add_co_requirement(self, name, trigger_condition, required_item_id, message):
-        self.co_requirements.append({
-            "name": name,
-            "condition": trigger_condition,
-            "required_item": required_item_id,
-            "message": message
-        })
-
-    def add_mutual_exclusion(self, name, category_a, category_b, reason):
-        self.mutual_exclusions.append({
-            "name": name,
-            "cat_a": category_a,
-            "cat_b": category_b,
-            "reason": reason
-        })
-
-    def validate(self, dishes: List[Dish], available_ingredients: Dict) -> Tuple[bool, str]:
-        """
-        Valida una lista de platos contra todas las reglas definidas.
-        Retorna: (EsValido, MensajeError)
-        """
-        dish_categories = [d.category for d in dishes]
-        
-        # 1. Verificar Exclusión Mutua
-        for rule in self.mutual_exclusions:
-            if rule["cat_a"] in dish_categories and rule["cat_b"] in dish_categories:
-                return False, f"Restricción '{rule['name']}': {rule['reason']}"
-
-        # 2. Verificar Co-requisitos (Ingredientes especiales)
-        for rule in self.co_requirements:
-            for dish in dishes:
-                if rule["condition"](dish):
-                    req_item = rule["required_item"]
-                    # Verificamos si existe el ingrediente en el inventario
-                    if req_item not in available_ingredients or available_ingredients[req_item].quantity <= 0:
-                        return False, f"Restricción '{rule['name']}': {rule['message']} (Falta {req_item})"
-        
+    def validate(self, dishes: List[Dish], ingredients: Dict[str, Ingredient]) -> Tuple[bool, str]:
+        for constraint in self.constraints:
+            valid, message = constraint.validate(dishes, ingredients)
+            if not valid:
+                return False, message
         return True, "Validación exitosa"

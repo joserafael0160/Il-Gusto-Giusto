@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from dataclasses import asdict
-from src.models.restaurant import Restaurant, Employee, Table, Dish, Ingredient, Order, EmployeeRole
+from src.models.restaurant import Restaurant, Employee, Table, Dish, Ingredient, Order, EmployeeRole, ExperienceLevel
 from src.models.events import Event
 
 class JSONHandler:
@@ -11,7 +11,7 @@ class JSONHandler:
         def json_serial(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
-            if isinstance(obj, EmployeeRole):
+            if isinstance(obj, (EmployeeRole, ExperienceLevel)):
                 return obj.value
             raise TypeError(f"Type {type(obj)} not serializable")
 
@@ -23,7 +23,7 @@ class JSONHandler:
             "menu": {k: asdict(v) for k, v in restaurant.menu.items()},
             "ingredients": {k: asdict(v) for k, v in restaurant.ingredients.items()},
             "active_orders": [asdict(o) for o in restaurant.active_orders],
-            "history": [asdict(o) for o in restaurant.history],
+            "history": restaurant.history,
             "scheduled_events": [asdict(e) for e in scheduler_events]
         }
 
@@ -39,27 +39,37 @@ class JSONHandler:
             data = json.load(f)
 
         rest = Restaurant(name=data["name"], balance=data["balance"])
-        
-        # Cargar diccionarios básicos
+        rest.history = data.get("history", [])
+
         for k, v in data["employees"].items():
             busy = datetime.fromisoformat(v["busy_until"]) if v.get("busy_until") else None
             rest.employees[k] = Employee(
-                id=v["id"], name=v["name"], role=EmployeeRole(v["role"]),
-                specialties=v["specialties"], is_available=v["is_available"], busy_until=busy
+                id=v["id"],
+                name=v["name"],
+                role=EmployeeRole(v["role"]),
+                experience=ExperienceLevel(v["experience"]),
+                specialties=v["specialties"],
+                daily_wage=v["daily_wage"],
+                is_available=v["is_available"],
+                busy_until=busy
             )
-        
+
         for k, v in data["tables"].items():
-            rest.tables[k] = Table(id=v["id"], number=v["number"], capacity=v["capacity"], is_occupied=v["is_occupied"])
-            
+            rest.tables[k] = Table(
+                id=v["id"],
+                number=v["number"],
+                capacity=v["capacity"],
+                is_occupied=v["is_occupied"]
+            )
+
         for k, v in data["menu"].items():
             rest.menu[k] = Dish(**v)
-            
+
         for k, v in data["ingredients"].items():
             rest.ingredients[k] = Ingredient(**v)
 
-        # Reconstruir Eventos
         events = []
         for e_data in data.get("scheduled_events", []):
             events.append(Event.from_dict(e_data))
-            
+
         return rest, events

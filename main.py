@@ -4,43 +4,58 @@ from pathlib import Path
 from datetime import datetime
 import os
 
-if not os.path.exists("data"):
-    os.makedirs("data")
-
-# Rutas
 ROOT_DIR = Path(__file__).parent
-sys.path.append(str(ROOT_DIR / "src"))
+if str(ROOT_DIR / "src") not in sys.path:
+    sys.path.append(str(ROOT_DIR / "src"))
 
 from src.core.scheduler import EventScheduler
 from src.persistence.json_handler import JSONHandler
 from src.components.dashboard import render_resource_status, render_event_timeline
-
+from src.components.menu_admin import render_menu_manager
+from src.components.staff_admin import render_staff_manager
+from src.components.supply_store import render_store_and_stock
+from src.components.finance import render_finances
 
 def init_state():
     if 'restaurant' not in st.session_state:
-        rest, events = JSONHandler.load_restaurant("data/restaurant_state.json")
+        state_path = "data/restaurant_state.json"
+        seed_path = "data/default_config.json"
         
-        # --- LÓGICA DE AUTO-LIMPIEZA AL ARRANCAR ---
+        # Crear directorio data si no existe
+        os.makedirs("data", exist_ok=True)
+
+        if os.path.exists(state_path):
+            rest, events = JSONHandler.load_restaurant(state_path)
+        elif os.path.exists(seed_path):
+            rest, events = JSONHandler.load_restaurant(seed_path)
+        else:
+            st.error("No se encontraron configuraciones base en el directorio data/.")
+            return
+
+        # Sincronización cronológica inicial al arrancar el programa
         now = datetime.now()
-        
-        # 1. Por defecto, ponemos todas las mesas como libres
-        for table in rest.tables.values():
-            table.is_occupied = False
-            
-        # 2. Solo marcamos como ocupadas las que tienen eventos ACTIVOS ahora mismo
         active_events = []
         for event in events:
             if event.start_time <= now <= event.end_time:
                 table = rest.tables.get(event.table_id)
-                if table: table.is_occupied = True
+                if table:
+                    table.is_occupied = True
                 active_events.append(event)
             elif event.end_time > now:
-                # Mantener eventos futuros en la lista, pero no ocupan la mesa todavía
                 active_events.append(event)
-        
+            else:
+                table = rest.tables.get(event.table_id)
+                if table:
+                    table.is_occupied = False
+                chef = rest.employees.get(event.assigned_chef_id)
+                if chef:
+                    chef.is_available = True
+                    chef.busy_until = None
+
         st.session_state.restaurant = rest
         st.session_state.scheduler = EventScheduler(rest)
         st.session_state.scheduler.scheduled_events = active_events
+
 def save_all():
     JSONHandler.save_restaurant(
         st.session_state.restaurant,
@@ -48,57 +63,37 @@ def save_all():
         "data/restaurant_state.json"
     )
 
-def init_state():
-    if 'restaurant' not in st.session_state:
-        rest, events = JSONHandler.load_restaurant("data/restaurant_state.json")
-        if not rest:
-            # Si no existe el JSON, el JSONHandler debería crear uno por defecto
-            # o cargar uno desde un archivo semilla.
-            st.error("No se pudo cargar el estado inicial.")
-            return
-            
-        st.session_state.restaurant = rest
-        st.session_state.scheduler = EventScheduler(rest)
-        st.session_state.scheduler.scheduled_events = events
-        
-        # Sincronización de tiempo real al arrancar
-        now = datetime.now()
-        for event in events:
-            if event.end_time < now:
-                table = rest.tables.get(event.table_id)
-                if table: table.is_occupied = False
-                chef = rest.employees.get(event.assigned_chef_id)
-                if chef: 
-                    chef.is_available = True
-                    chef.busy_until = None
-        st.session_state.scheduler.scheduled_events = [e for e in events if e.end_time > now]
-
 def main():
-    st.set_page_config(page_title="El Dragón del Sabor", page_icon="🐉", layout="wide")
+    st.set_page_config(page_title="Il Gusto Giusto", page_icon="🍕", layout="wide")
     init_state()
-    
-    st.title("🐉 El Dragón del Sabor")
-    
 
+    st.title("🍕 Il Gusto Giusto")
+    st.caption("Planificador de Eventos y Motor de Disponibilidad")
 
+    # Panel lateral de navegación
+    menu = st.sidebar.radio(
+        "Navegación del Sistema",
+        [
+            "Servicio (Dashboard)",
+            "Gestión del Menú",
+            "Contrataciones (Staff)",
+            "Compras y Suministros",
+            "Libro de Contabilidad"
+        ]
+    )
 
-
-    # Sidebar optimizada
-    menu = st.sidebar.radio("Navegación", ["Dashboard", "Inventario"])
-    
-    if menu == "Dashboard":
-        # Todo ocurre aquí ahora: Ver, Pedir y Cancelar
+    if menu == "Servicio (Dashboard)":
         render_resource_status(st.session_state.restaurant, st.session_state.scheduler, save_all)
-        
         st.divider()
         render_event_timeline(st.session_state.scheduler, save_all)
-        
-    elif menu == "Inventario":
-        st.subheader("🍱 Gestión de Stock")
-        # Podemos mejorar esto luego con una UI similar a las mesas para los ingredientes
-        st.table(st.session_state.restaurant.ingredients)
+    elif menu == "Gestión del Menú":
+        render_menu_manager(st.session_state.restaurant, save_all)
+    elif menu == "Contrataciones (Staff)":
+        render_staff_manager(st.session_state.restaurant, save_all)
+    elif menu == "Compras y Suministros":
+        render_store_and_stock(st.session_state.restaurant, save_all)
+    elif menu == "Libro de Contabilidad":
+        render_finances(st.session_state.restaurant)
+
 if __name__ == "__main__":
     main()
-
-
-

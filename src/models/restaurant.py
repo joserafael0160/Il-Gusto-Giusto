@@ -1,12 +1,27 @@
+import os
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Dict, List, Optional, Any
 
-class EmployeeRole(str, Enum):
+class EmployeeRole(Enum):
     CHEF = "chef"
     WAITER = "waiter"
-    MANAGER = "manager"
+
+class ExperienceLevel(Enum):
+    JUNIOR = "junior"
+    SENIOR = "senior"
+
+@dataclass
+class Employee:
+    id: str
+    name: str
+    role: EmployeeRole
+    experience: ExperienceLevel
+    specialties: List[str]
+    daily_wage: float
+    is_available: bool = True
+    busy_until: Optional[datetime] = None
 
 @dataclass
 class Ingredient:
@@ -14,8 +29,8 @@ class Ingredient:
     name: str
     quantity: float
     unit: str
-    min_quantity: float = 0.0
-    price_per_unit: float = 0.0
+    min_quantity: float
+    price_per_unit: float
 
 @dataclass
 class Dish:
@@ -23,19 +38,10 @@ class Dish:
     name: str
     price: float
     prep_time: int  # en minutos
-    ingredients: Dict[str, float]  # {id_ingrediente: cantidad}
-    base_ingredients: List[str]
-    category: str
+    ingredients: Dict[str, float]  # ing_id -> cantidad requerida
+    base_ingredients: List[str]    # ingredientes indispensables (no se pueden quitar)
+    category: str                  # ej: "pizza", "seafood", "truffle_specialty"
     requires_specialty: Optional[str] = None
-
-@dataclass
-class Employee:
-    id: str
-    name: str
-    role: EmployeeRole
-    specialties: List[str] = field(default_factory=list)
-    is_available: bool = True
-    busy_until: Optional[datetime] = None
 
 @dataclass
 class Table:
@@ -48,29 +54,28 @@ class Table:
 class Order:
     id: str
     table_id: str
-    dishes: Dict[str, int]  # {id_plato: cantidad}
-    modifications: List[str] = field(default_factory=list) # "Sin cebolla", etc.
-    total_price: float = 0.0
-    status: str = "pending"
+    dishes: Dict[str, int]  # dish_id -> cantidad
+    # Almacena ingredientes opcionales omitidos: dish_id -> [lista de ing_id omitidos]
+    customized_removals: Dict[str, List[str]] = field(default_factory=dict)
 
-    def calculate_total_price(self, menu: Dict[str, Dish]) -> float:
-        total = 0.0
-        for dish_id, qty in self.dishes.items():
-            if dish_id in menu:
-                total += menu[dish_id].price * qty
-        return total
-
-@dataclass
 class Restaurant:
-    name: str
-    balance: float
-    menu: Dict[str, Dish] = field(default_factory=dict)
-    ingredients: Dict[str, Ingredient] = field(default_factory=dict)
-    employees: Dict[str, Employee] = field(default_factory=dict)
-    tables: Dict[str, Table] = field(default_factory=dict)
-    active_orders: List[Order] = field(default_factory=list)
-    history: List[Order] = field(default_factory=list)
+    def __init__(self, name: str, balance: float):
+        self.name = name
+        self.balance = balance
+        self.employees: Dict[str, Employee] = {}
+        self.tables: Dict[str, Table] = {}
+        self.menu: Dict[str, Dish] = {}
+        self.ingredients: Dict[str, Ingredient] = {}
+        self.history: List[Dict[str, Any]] = []  # Historial transaccional
+        self.active_orders: List[Order] = []
 
-    def add_order(self, order: Order):
-        self.active_orders.append(order)
-        self.history.append(order)
+        self.add_transaction(balance, "Capital Inicial de Apertura")
+
+    def add_transaction(self, amount: float, description: str):
+        self.balance += amount
+        self.history.append({
+            "timestamp": datetime.now().isoformat(),
+            "amount": amount,
+            "description": description,
+            "balance_after": self.balance
+        })
