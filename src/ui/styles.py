@@ -2,10 +2,19 @@
 import streamlit as st
 
 def apply_custom_theme() -> None:
-    """Injects premium, cohesive CSS styling for both the navigation and dashboard cards."""
+    """Injects premium, cohesive CSS styling with Italian-inspired fonts."""
     st.markdown(
         """
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+
+        html, body, [class*="css"]  {
+            font-family: 'Lato', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+        }
+
         /* 1. SISTEMA DE NAVEGACIÓN (BARRA LATERAL) */
         [data-testid="stSidebar"] .stButton > button {
             display: flex !important;
@@ -79,7 +88,7 @@ def apply_custom_theme() -> None:
     )
 
 def render_italian_header(title: str, subtitle: str) -> None:
-    """Displays an elegant, native-feeling header with subtle Italian colors."""
+    """Displays an elegant header with subtle Italian flag colors."""
     st.markdown(
         f"""
         <div style="text-align: center; margin-top: 10px; margin-bottom: 30px;">
@@ -88,7 +97,7 @@ def render_italian_header(title: str, subtitle: str) -> None:
                 <span style="display: inline-block; width: 12px; height: 12px; background-color: #f4f4f9; border-radius: 50%;"></span>
                 <span style="display: inline-block; width: 12px; height: 12px; background-color: #e76f51; border-radius: 50%;"></span>
             </div>
-            <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 2.5rem; color: #f4f4f9;">{title}</h1>
+            <h1 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #f4f4f9;">{title}</h1>
             <p style="color: #a0a0a5; font-size: 1rem; font-style: italic; margin-top: 5px;">{subtitle}</p>
         </div>
         """,
