@@ -1,96 +1,96 @@
+# src/ui/styles.py
 import streamlit as st
-import sys
-from pathlib import Path
-from datetime import datetime
-import os
 
-ROOT_DIR = Path(__file__).parent
-if str(ROOT_DIR / "src") not in sys.path:
-    sys.path.append(str(ROOT_DIR / "src"))
-
-from src.core.scheduler import EventScheduler
-from src.persistence.json_handler import JSONHandler
-from src.components.dashboard import render_resource_status, render_event_timeline
-from src.components.menu_admin import render_menu_manager
-from src.components.staff_admin import render_staff_manager
-from src.components.supply_store import render_store_and_stock
-from src.components.finance import render_finances
-
-def init_state():
-    if 'restaurant' not in st.session_state:
-        state_path = "data/restaurant_state.json"
-        seed_path = "data/default_config.json"
+def apply_custom_theme() -> None:
+    """Injects premium, cohesive CSS styling for both the navigation and dashboard cards."""
+    st.markdown(
+        """
+        <style>
+        /* 1. SISTEMA DE NAVEGACIÓN (BARRA LATERAL) */
+        [data-testid="stSidebar"] .stButton > button {
+            display: flex !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            text-align: left !important;
+            width: 100% !important;
+            padding: 12px 16px !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            font-size: 1rem !important;
+            background-color: transparent !important;
+            transition: all 0.2s ease-in-out !important;
+        }
         
-        os.makedirs("data", exist_ok=True)
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background-color: rgba(231, 111, 81, 0.1) !important;
+            border-color: #e76f51 !important;
+            color: #e76f51 !important;
+        }
 
-        if os.path.exists(state_path):
-            rest, events = JSONHandler.load_restaurant(state_path)
-        elif os.path.exists(seed_path):
-            rest, events = JSONHandler.load_restaurant(seed_path)
-        else:
-            st.error("No se encontraron configuraciones base en el directorio data/.")
-            return
+        [data-testid="stSidebar"] .stButton > button[kind="primary"] {
+            background-color: #e76f51 !important;
+            border-color: #e76f51 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(231, 111, 81, 0.25) !important;
+        }
+        
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+            color: #ffffff !important;
+            background-color: #d65d45 !important;
+            border-color: #d65d45 !important;
+        }
 
-        now = datetime.now()
-        active_events = []
-        for event in events:
-            if event.start_time <= now <= event.end_time:
-                table = rest.tables.get(event.table_id)
-                if table:
-                    table.is_occupied = True
-                active_events.append(event)
-            elif event.end_time > now:
-                active_events.append(event)
-            else:
-                table = rest.tables.get(event.table_id)
-                if table:
-                    table.is_occupied = False
-                chef = rest.employees.get(event.assigned_chef_id)
-                if chef:
-                    chef.is_available = True
-                    chef.busy_until = None
+        /* 2. DISEÑO DE TARJETAS (CARDS) DEL DASHBOARD */
+        div[data-testid="stVerticalBlockBorderContainer"] {
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            background-color: #1a1a1a !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15) !important;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                        border-color 0.25s ease-in-out, 
+                        box-shadow 0.25s ease-in-out !important;
+        }
+        
+        /* Efecto Elevación (Hover) en las Tarjetas */
+        div[data-testid="stVerticalBlockBorderContainer"]:hover {
+            transform: translateY(-3px);
+            border-color: rgba(231, 111, 81, 0.3) !important;
+            box-shadow: 0 8px 16px rgba(231, 111, 81, 0.08) !important;
+        }
 
-        st.session_state.restaurant = rest
-        st.session_state.scheduler = EventScheduler(rest)
-        st.session_state.scheduler.scheduled_events = active_events
-
-def save_all():
-    JSONHandler.save_restaurant(
-        st.session_state.restaurant,
-        st.session_state.scheduler.scheduled_events,
-        "data/restaurant_state.json"
+        /* 3. POP-OVERS Y FORMULARIOS */
+        div[data-testid="stPopover"] > button {
+            background-color: rgba(255, 255, 255, 0.02) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        div[data-testid="stPopover"] > button:hover {
+            border-color: #e76f51 !important;
+            color: #e76f51 !important;
+            background-color: rgba(231, 111, 81, 0.05) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
     )
 
-def main():
-    st.set_page_config(page_title="Il Gusto Giusto", page_icon="🍕", layout="wide")
-    init_state()
-
-    st.title("🍕 Il Gusto Giusto")
-    st.caption("Sistema de Gestión de Restaurante Italiano")
-
-    menu = st.sidebar.radio(
-        "Navegación",
-        [
-            "Servicio (Dashboard)",
-            "Gestión del Menú",
-            "Contrataciones (Staff)",
-            "Compras y Suministros",
-            "Libro de Contabilidad"
-        ]
+def render_italian_header(title: str, subtitle: str) -> None:
+    """Displays an elegant, native-feeling header with subtle Italian colors."""
+    st.markdown(
+        f"""
+        <div style="text-align: center; margin-top: 10px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #2a9d8f; border-radius: 50%;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #f4f4f9; border-radius: 50%;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #e76f51; border-radius: 50%;"></span>
+            </div>
+            <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 2.5rem; color: #f4f4f9;">{title}</h1>
+            <p style="color: #a0a0a5; font-size: 1rem; font-style: italic; margin-top: 5px;">{subtitle}</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-
-    if menu == "Servicio (Dashboard)":
-        render_resource_status(st.session_state.restaurant, st.session_state.scheduler, save_all)
-        st.divider()
-        render_event_timeline(st.session_state.scheduler, save_all)
-    elif menu == "Gestión del Menú":
-        render_menu_manager(st.session_state.restaurant, save_all)
-    elif menu == "Contrataciones (Staff)":
-        render_staff_manager(st.session_state.restaurant, save_all)
-    elif menu == "Compras y Suministros":
-        render_store_and_stock(st.session_state.restaurant, save_all)
-    elif menu == "Libro de Contabilidad":
-        render_finances(st.session_state.restaurant)
-
-if __name__ == "__main__":
-    main()

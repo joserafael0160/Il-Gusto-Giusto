@@ -67,7 +67,9 @@ class EventScheduler:
             table_id=table.id,
             assigned_chef_id=chef.id,
             start_time=start_time,
-            end_time=end_time
+            end_time=end_time,
+            dishes=order.dishes,                       # Trazabilidad de lo pedido
+            customized_removals=order.customized_removals  # Trazabilidad de omisiones
         )
         self.scheduled_events.append(event)
 
@@ -92,10 +94,12 @@ class EventScheduler:
         return None
 
     def cancel_event(self, event_id: str) -> Tuple[bool, str]:
+        """Cancela el evento, libera mesa/chef y devuelve los ingredientes al inventario."""
         event = next((e for e in self.scheduled_events if e.id == event_id), None)
         if not event:
             return False, "Evento no encontrado."
 
+        # Liberar mesa y chef
         table = self.restaurant.tables.get(event.table_id)
         if table:
             table.is_occupied = False
@@ -105,8 +109,20 @@ class EventScheduler:
             chef.is_available = True
             chef.busy_until = None
 
+        # 🔄 REEMBOLSO EXACTO DE INGREDIENTES
+        for dish_id, qty in event.dishes.items():
+            dish = self.restaurant.menu.get(dish_id)
+            if not dish:
+                continue
+            removed = event.customized_removals.get(dish_id, [])
+            for ing_id, amt in dish.ingredients.items():
+                if ing_id in removed:
+                    continue  # No se consumió, no se devuelve
+                if ing_id in self.restaurant.ingredients:
+                    self.restaurant.ingredients[ing_id].quantity += (amt * qty)
+
         self.scheduled_events.remove(event)
-        return True, "Evento cancelado y recursos liberados."
+        return True, "Evento cancelado y recursos devueltos con éxito al inventario."
 
     def _dry_run_validation(self, order: Order, start_time: datetime) -> Tuple[bool, str]:
         table = self.restaurant.tables.get(order.table_id)
@@ -127,20 +143,16 @@ class EventScheduler:
         max_t = max(d.prep_time for d in ordered_dishes_objs)
         end_time = start_time + timedelta(minutes=max_t)
 
-        # 1. Mesa libre
         if not self._is_resource_free(table.id, start_time, end_time, "table"):
             return False, "Mesa ocupada en ese intervalo"
 
-        # 2. Restricciones del dominio
         valid, msg = self.validator.validate(ordered_dishes_objs, self.restaurant.ingredients)
         if not valid:
             return False, msg
 
-        # 3. Stock suficiente
         if not self._check_ingredients_stock(order)[0]:
             return False, "Stock insuficiente"
 
-        # 4. Chef disponible
         spec = next((d.requires_specialty for d in ordered_dishes_objs if d.requires_specialty), None)
         if not self._find_available_chef(start_time, end_time, spec):
             return False, "Sin chef calificado libre"

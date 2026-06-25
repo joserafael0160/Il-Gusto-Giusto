@@ -128,28 +128,22 @@ class TestBasicScheduling:
         assert "plato" in msg.lower() or "selecciona" in msg.lower()
 
     def test_does_not_assign_waiter_as_chef(self, scheduler, sample_restaurant):
-        # Solo queda el chef1 (especialidad pasta) y el waiter. El pedido d1 necesita especialidad.
-        # Pero vamos a probar un plato sin especialidad con solo waiter como chef? No, waiter no es chef.
-        # Verificar que nunca se asigna un waiter a un pedido.
-        # Creamos orden sin especialidad, debe asignar chef2 (chef sin especialidad)
         order = Order(id="ord", table_id="t1", dishes={"d2": 1})  # d2 no requiere especialidad
         success, _, event = scheduler.schedule_order(order, datetime.now())
         assert success
         assert event.assigned_chef_id != "waiter1"
 
     def test_overlap_boundary_exact_end_start(self, scheduler, sample_restaurant):
-        # Un evento termina a las 10:00, el siguiente empieza a las 10:00 -> no hay solapamiento
         start1 = datetime.now()
         order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})  # 30 min
         scheduler.schedule_order(order1, start1)
-        # El siguiente empieza justo cuando termina el primero
         start2 = start1 + timedelta(minutes=30)
         order2 = Order(id="ord2", table_id="t1", dishes={"d1": 1})
         success, msg, _ = scheduler.schedule_order(order2, start2)
         assert success
 
 # ---------------------------------------------------------------------------
-# 2. Cancelación y liberación de recursos
+# 2. Cancelación y liberación de recursos (incluye reembolso)
 # ---------------------------------------------------------------------------
 
 class TestCancellation:
@@ -180,6 +174,35 @@ class TestCancellation:
         scheduler.cancel_event(event.id)
         assert not sample_restaurant.tables["t1"].is_occupied
         assert sample_restaurant.employees["chef1"].is_available
+
+    def test_cancel_refunds_ingredients(self, scheduler, sample_restaurant):
+        initial_pasta = sample_restaurant.ingredients["pasta"].quantity
+        initial_truffle = sample_restaurant.ingredients["truffle_oil"].quantity
+
+        order = Order(id="ord", table_id="t1", dishes={"d1": 2})  # consume pasta 0.3, truffle 0.1
+        _, _, event = scheduler.schedule_order(order, datetime.now())
+        assert sample_restaurant.ingredients["pasta"].quantity == initial_pasta - 0.3
+        assert sample_restaurant.ingredients["truffle_oil"].quantity == initial_truffle - 0.1
+
+        scheduler.cancel_event(event.id)
+        assert sample_restaurant.ingredients["pasta"].quantity == initial_pasta
+        assert sample_restaurant.ingredients["truffle_oil"].quantity == initial_truffle
+
+    def test_cancel_with_optional_removal_refunds_correctly(self, scheduler, sample_restaurant):
+        order = Order(id="ord", table_id="t1", dishes={"d2": 2},
+                      customized_removals={"d2": ["truffle_oil"]})
+        initial_seafood = sample_restaurant.ingredients["seafood_mix"].quantity
+        initial_truffle = sample_restaurant.ingredients["truffle_oil"].quantity
+
+        success, _, event = scheduler.schedule_order(order, datetime.now())
+        assert success
+        # Solo se consumió seafood_mix (0.3 * 2 = 0.6)
+        assert sample_restaurant.ingredients["seafood_mix"].quantity == initial_seafood - 0.6
+        assert sample_restaurant.ingredients["truffle_oil"].quantity == initial_truffle
+
+        scheduler.cancel_event(event.id)
+        assert sample_restaurant.ingredients["seafood_mix"].quantity == initial_seafood
+        assert sample_restaurant.ingredients["truffle_oil"].quantity == initial_truffle
 
 # ---------------------------------------------------------------------------
 # 3. Stock y restricciones
@@ -242,7 +265,6 @@ class TestStockAndConstraints:
         assert sample_restaurant.ingredients["pasta"].quantity == expected_pasta
 
     def test_customized_removal_does_not_affect_stock_check(self, scheduler, sample_restaurant):
-        # Pedir d2 quitando truffle_oil, con truffle_oil agotado. Debe ser válido.
         sample_restaurant.ingredients["truffle_oil"].quantity = 0.0
         order = Order(id="ord", table_id="t1", dishes={"d2": 1},
                       customized_removals={"d2": ["truffle_oil"]})
@@ -284,16 +306,13 @@ class TestFindNextSlot:
         assert slot >= start + timedelta(minutes=30)
 
     def test_find_slot_with_chef_busy(self, scheduler, sample_restaurant):
-        # Ocupar los dos chefs, luego buscar hueco para un pedido que requiere especialidad
         start = datetime.now()
         order1 = Order(id="ord1", table_id="t1", dishes={"d1": 1})  # chef1
         scheduler.schedule_order(order1, start)
-        order2 = Order(id="ord2", table_id="t2", dishes={"d2": 1})  # chef2 (sin especialidad)
+        order2 = Order(id="ord2", table_id="t2", dishes={"d2": 1})  # chef2
         scheduler.schedule_order(order2, start)
-        # Ahora buscar para otro pedido que requiere chef1
         order3 = Order(id="ord3", table_id="t3", dishes={"d3": 1})  # requiere pasta -> chef1
         slot = scheduler.find_next_available_slot(order3)
-        # Debe ser después de que chef1 se libere (30 min) o después de que chef2 se libere? chef2 no sirve.
         assert slot is not None
         assert slot >= start + timedelta(minutes=30)
 
@@ -348,7 +367,6 @@ class TestPersistence:
         assert rest is None
 
     def test_complex_state_persistence(self, scheduler, sample_restaurant):
-        # Crear múltiples eventos, transacciones, modificar stock
         order1 = Order(id="o1", table_id="t1", dishes={"d1": 2})
         order2 = Order(id="o2", table_id="t2", dishes={"d2": 1})
         scheduler.schedule_order(order1, datetime.now())
@@ -461,7 +479,6 @@ class TestStaffingService:
         r = Restaurant("Big", 5000)
         for i in range(10):
             r.tables[f"t{i}"] = Table(f"t{i}", i, 4)
-        # 10 mesas -> chef target = max(1, 10//3)=3, waiter target = max(1, 10//2)=5
         deficit_c = calculate_role_deficit(r, EmployeeRole.CHEF)
         deficit_w = calculate_role_deficit(r, EmployeeRole.WAITER)
         assert deficit_c == 3
