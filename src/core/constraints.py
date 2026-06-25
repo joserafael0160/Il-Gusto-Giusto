@@ -1,3 +1,4 @@
+# src/core/constraints.py
 from abc import ABC, abstractmethod
 from typing import List, Dict, Tuple
 from src.models.restaurant import Dish, Ingredient
@@ -5,13 +6,13 @@ from src.models.restaurant import Dish, Ingredient
 class Constraint(ABC):
     @abstractmethod
     def validate(self, dishes: List[Dish], ingredients: Dict[str, Ingredient]) -> Tuple[bool, str]:
-        """Retorna (EsValido, Mensaje)"""
+        """Validates specific domain rules. Returns (is_valid, error_message)."""
         pass
 
 class CoRequirementConstraint(Constraint):
     """
-    Regla de Co-requisito (Inclusión):
-    Si se detecta un plato de cierta categoría, se exige que exista un ingrediente complementario en stock.
+    Co-requirement rule:
+    If a dish of a specific category is requested, a certain supply ingredient must be in stock.
     """
     def __init__(self, name: str, trigger_category: str, required_ingredient_id: str, message: str):
         self.name = name
@@ -29,8 +30,8 @@ class CoRequirementConstraint(Constraint):
 
 class MutualExclusionConstraint(Constraint):
     """
-    Regla de Exclusión Mutua:
-    No se permite que convivan ciertas categorías de platos en un mismo pedido.
+    Mutual Exclusion rule:
+    Prevents combining incompatible categories of dishes within a single table order.
     """
     def __init__(self, name: str, category_a: str, category_b: str, message: str):
         self.name = name
@@ -45,12 +46,11 @@ class MutualExclusionConstraint(Constraint):
         return True, ""
 
 class ConstraintValidator:
-    def __init__(self):
+    def __init__(self) -> None:
         self.constraints: List[Constraint] = []
         self._init_default_rules()
 
-    def _init_default_rules(self):
-        # 1. Exclusión Mutua: Tradición italiana (No mezclar mariscos con quesos pesados)
+    def _init_default_rules(self) -> None:
         self.constraints.append(
             MutualExclusionConstraint(
                 name="Tradición Italiana (Mar & Queso)",
@@ -59,7 +59,6 @@ class ConstraintValidator:
                 message="No se permite ordenar mariscos y platos con base láctea pesada (Gorgonzola/Cacio) en el mismo pedido por etiqueta culinaria."
             )
         )
-        # 2. Co-requisito: Los platos con trufa requieren Aceite de Trufa en el stock
         self.constraints.append(
             CoRequirementConstraint(
                 name="Soporte de Trufa",

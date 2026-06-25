@@ -1,19 +1,23 @@
+# src/persistence/json_handler.py
 import json
 import os
 from datetime import datetime
 from dataclasses import asdict
-from src.models.restaurant import Restaurant, Employee, Table, Dish, Ingredient, Order, EmployeeRole, ExperienceLevel
+from typing import Tuple, List, Dict, Any, Optional
+from src.models.restaurant import Restaurant, Employee, Table, Dish, Ingredient, EmployeeRole, ExperienceLevel
 from src.models.events import Event
 
 class JSONHandler:
     @staticmethod
-    def save_restaurant(restaurant: Restaurant, scheduler_events: list, filepath: str):
-        def json_serial(obj):
+    def save(restaurant: Restaurant, scheduler_events: List[Event], filepath: str) -> None:
+        """Serializes current domain state cleanly to a target JSON file."""
+        def json_serial(obj: Any) -> str:
             if isinstance(obj, datetime):
                 return obj.isoformat()
-            raise TypeError(f"Tipo no serializable: {type(obj)}")
+            if hasattr(obj, 'value'):
+                return obj.value
+            raise TypeError(f"Type not serializable: {type(obj)}")
 
-        # Empleados
         employees_serialized = {}
         for k, v in restaurant.employees.items():
             employees_serialized[k] = {
@@ -27,13 +31,12 @@ class JSONHandler:
                 "busy_until": v.busy_until.isoformat() if v.busy_until else None
             }
 
-        # Candidatos: convertir enums a cadenas manualmente
         applicants_serialized = []
         for cand in restaurant.applicants:
             applicants_serialized.append({
                 "name": cand["name"],
-                "role": cand["role"].value,          # ← cadena
-                "experience": cand["experience"].value,  # ← cadena
+                "role": getattr(cand["role"], 'value', cand["role"]),
+                "experience": getattr(cand["experience"], 'value', cand["experience"]),
                 "specialties": cand["specialties"],
                 "daily_wage": cand["daily_wage"],
                 "bio": cand["bio"]
@@ -55,35 +58,47 @@ class JSONHandler:
             json.dump(data, f, default=json_serial, indent=4, ensure_ascii=False)
 
     @staticmethod
-    def load_restaurant(filepath: str):
+    def load(filepath: str) -> Tuple[Optional[Restaurant], List[Event]]:
+        """Safely loads domain models from a JSON file, resolving custom Enums."""
         if not os.path.exists(filepath):
             return None, []
-
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
+        except (json.JSONDecodeError, IOError):
             return None, []
+        return JSONHandler._parse_data(data)
 
-        rest = Restaurant(name=data["name"], balance=data["balance"])
-        rest.history = data.get("history", [])
+    @staticmethod
+    def loads(json_str: str) -> Tuple[Optional[Restaurant], List[Event]]:
+        """Loads domain models from a JSON string (useful for file upload)."""
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError:
+            return None, []
+        return JSONHandler._parse_data(data)
 
-        # Cargar applicants convirtiendo las cadenas a enums
+    @staticmethod
+    def _parse_data(data: Dict[str, Any]) -> Tuple[Optional[Restaurant], List[Event]]:
+        """Internal parser for the loaded dictionary."""
+        restaurant = Restaurant(name=data["name"], balance=data["balance"])
+        restaurant.history = data.get("history", [])
+
         applicants_loaded = []
         for cand in data.get("applicants", []):
             applicants_loaded.append({
                 "name": cand["name"],
-                "role": EmployeeRole(cand["role"]),           # cadena -> enum
-                "experience": ExperienceLevel(cand["experience"]),  # cadena -> enum
+                "role": EmployeeRole(cand["role"]),
+                "experience": ExperienceLevel(cand["experience"]),
                 "specialties": cand["specialties"],
                 "daily_wage": cand["daily_wage"],
                 "bio": cand["bio"]
             })
-        rest.applicants = applicants_loaded
+        restaurant.applicants = applicants_loaded
 
         for k, v in data["employees"].items():
             busy = datetime.fromisoformat(v["busy_until"]) if v.get("busy_until") else None
-            rest.employees[k] = Employee(
+            restaurant.employees[k] = Employee(
                 id=v["id"],
                 name=v["name"],
                 role=EmployeeRole(v["role"]),
@@ -95,16 +110,16 @@ class JSONHandler:
             )
 
         for k, v in data["tables"].items():
-            rest.tables[k] = Table(**v)
+            restaurant.tables[k] = Table(**v)
 
         for k, v in data["menu"].items():
-            rest.menu[k] = Dish(**v)
+            restaurant.menu[k] = Dish(**v)
 
         for k, v in data["ingredients"].items():
-            rest.ingredients[k] = Ingredient(**v)
+            restaurant.ingredients[k] = Ingredient(**v)
 
         events = []
         for e_data in data.get("scheduled_events", []):
             events.append(Event.from_dict(e_data))
 
-        return rest, events
+        return restaurant, events

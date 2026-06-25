@@ -9,7 +9,6 @@ from src.core.scheduler import EventScheduler
 def _render_table_card(table_id: str, table, restaurant: Restaurant, scheduler: EventScheduler, save_callback) -> None:
     now = datetime.now()
 
-    # Buscar evento actualmente activo o futuro para la mesa
     active_event = next((e for e in scheduler.scheduled_events
                          if e.table_id == table_id and e.start_time <= now <= e.end_time), None)
     is_occupied = active_event is not None or table.is_occupied
@@ -21,7 +20,6 @@ def _render_table_card(table_id: str, table, restaurant: Restaurant, scheduler: 
         if future_events:
             event_to_display = min(future_events, key=lambda e: e.start_time)
 
-    # 🎨 Diseño de Badges estilizados de estado
     if is_occupied:
         status_badge = (
             "<span style='background-color: rgba(231, 111, 81, 0.15); color: #e76f51; "
@@ -36,21 +34,19 @@ def _render_table_card(table_id: str, table, restaurant: Restaurant, scheduler: 
         )
 
     with st.container(border=True):
-        # Encabezado de la mesa con capacidad alineada a la derecha
-        c_head1, c_head2 = st.columns([1, 1])
-        with c_head1:
+        col_head1, col_head2 = st.columns([1, 1])
+        with col_head1:
             st.markdown(f"### 🪑 Mesa {table.number}")
-        with c_head2:
+        with col_head2:
             st.markdown(f"<p style='text-align: right; color: #888888; margin-top: 8px; font-size: 0.9rem;'>👥 Cap: <b>{table.capacity} pax</b></p>", unsafe_allow_html=True)
 
-        # Renderizado del badge de estado
         st.markdown(f"<div style='margin-bottom: 20px;'>{status_badge}</div>", unsafe_allow_html=True)
 
         if not is_occupied:
-            with st.popover("➕ Tomar Comanda", use_container_width=True):
+            with st.popover("➕ Tomar Comanda", width='stretch'):
                 _render_order_popover(table, restaurant, scheduler, save_callback)
         else:
-            with st.popover("🔍 Detalles de Servicio", use_container_width=True):
+            with st.popover("🔍 Detalles de Servicio", width='stretch'):
                 if event_to_display:
                     chef = restaurant.employees.get(event_to_display.assigned_chef_id)
                     is_future = event_to_display.start_time > now
@@ -66,7 +62,7 @@ def _render_table_card(table_id: str, table, restaurant: Restaurant, scheduler: 
                     st.write(f"**Chef asignado:** {chef.name if chef else 'N/A'}")
                     st.divider()
                     
-                if st.button("❌ Liberar Mesa", key=f"can_t{table_id}", type="secondary", use_container_width=True):
+                if st.button("❌ Liberar Mesa", key=f"can_t{table_id}", type="secondary", width='stretch'):
                     if event_to_display:
                         scheduler.cancel_event(event_to_display.id)
                     else:
@@ -77,12 +73,11 @@ def _render_table_card(table_id: str, table, restaurant: Restaurant, scheduler: 
 def _render_order_popover(table, restaurant: Restaurant, scheduler: EventScheduler, save_callback) -> None:
     st.markdown("### 📝 Nueva Comanda")
     
-    # 1. Buscador/Selector inteligente de platos (Corregido con clave única)
     dish_options = {dish.name: d_id for d_id, dish in restaurant.menu.items()}
     selected_dish_names = st.multiselect(
         "Selecciona los platos a ordenar:",
         options=list(dish_options.keys()),
-        placeholder="Buscar platillos en el menú...",
+        placeholder="Buscar platillos...",
         key=f"multiselect_dishes_{table.id}"
     )
     
@@ -95,18 +90,16 @@ def _render_order_popover(table, restaurant: Restaurant, scheduler: EventSchedul
             d_id = dish_options[name]
             dish = restaurant.menu[d_id]
             
-            # Controles en columnas compactas por plato
-            c1, c2 = st.columns([3, 2])
-            with c1:
+            col_d1, col_d2 = st.columns([3, 2])
+            with col_d1:
                 st.markdown(f"**{dish.name}**  \n`Precio: ${dish.price:.2f}` | `Prep: {dish.prep_time} min`")
-            with c2:
+            with col_d2:
                 qty = st.number_input(
                     "Cantidad:", min_value=1, max_value=10, value=1,
                     key=f"qty_t{table.id}_{d_id}"
                 )
                 selected_dishes[d_id] = qty
 
-            # Personalización opcional de ingredientes
             optionals = [ing_id for ing_id in dish.ingredients.keys() if ing_id not in dish.base_ingredients]
             if optionals:
                 with st.expander(f"Personalizar {dish.name} (Quitar ingredientes)"):
@@ -124,12 +117,12 @@ def _render_order_popover(table, restaurant: Restaurant, scheduler: EventSchedul
                         customized_removals[d_id] = removed_list
         st.divider()
     else:
-        st.info("Selecciona platos en el campo superior para armar la comanda.")
+        st.info("Selecciona platos para armar la comanda.")
 
     if selected_dishes:
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Enviar a Cocina", key=f"btn_t{table.id}", type="primary", use_container_width=True):
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("Enviar a Cocina", key=f"btn_t{table.id}", type="primary", width='stretch'):
                 new_order = Order(
                     id=f"ORD-{uuid.uuid4().hex[:4].upper()}",
                     table_id=table.id,
@@ -144,8 +137,8 @@ def _render_order_popover(table, restaurant: Restaurant, scheduler: EventSchedul
                 else:
                     st.error(msg)
 
-        with col2:
-            if st.button("⏱️ Buscar próximo hueco", key=f"find_slot_t{table.id}", use_container_width=True):
+        with col_btn2:
+            if st.button("⏱️ Buscar próximo hueco", key=f"find_slot_t{table.id}", width='stretch'):
                 new_order = Order(
                     id=f"ORD-{uuid.uuid4().hex[:4].upper()}",
                     table_id=table.id,
@@ -170,7 +163,6 @@ def _render_order_popover(table, restaurant: Restaurant, scheduler: EventSchedul
                 else:
                     st.error("No hay disponibilidad en las próximas 24 horas.")
 
-    # Flujo de confirmación para reservas agendadas fuera de hora
     pending_key = f"pending_order_{table.id}"
     if pending_key in st.session_state and st.session_state[pending_key]:
         pending = st.session_state[pending_key]
@@ -178,7 +170,7 @@ def _render_order_popover(table, restaurant: Restaurant, scheduler: EventSchedul
 
         st.write("---")
         st.write(f"**¿Agendar pedido de {slot.strftime('%H:%M:%S')} a {end_slot.strftime('%H:%M:%S')}?**")
-        if st.button("✅ Confirmar Agendamiento", key=f"confirm_slot_{table.id}", type="primary", use_container_width=True):
+        if st.button("✅ Confirmar Agendamiento", key=f"confirm_slot_{table.id}", type="primary", width='stretch'):
             success, msg, event = scheduler.schedule_order(order, slot)
             if success:
                 st.success("¡Pedido reservado y agendado!")
@@ -197,10 +189,8 @@ def _render_chef_status(restaurant: Restaurant, scheduler: EventScheduler) -> No
             with chef_cols[idx]:
                 is_working = any(e for e in scheduler.scheduled_events
                                  if e.assigned_chef_id == chef.id and e.start_time <= now <= e.end_time)
-                
                 chef.is_available = not is_working
                 
-                # 🎨 Badges estilizados de estado de los Chefs
                 if is_working:
                     chef_badge = (
                         "<span style='background-color: rgba(231, 111, 81, 0.15); color: #e76f51; "
@@ -214,7 +204,6 @@ def _render_chef_status(restaurant: Restaurant, scheduler: EventScheduler) -> No
                         "border: 1px solid rgba(42, 157, 143, 0.25);'>🟢 DISPONIBLE</span>"
                     )
                 
-                # Fichas individuales estructuradas
                 with st.container(border=True):
                     st.markdown(f"👨‍🍳 **{chef.name}**")
                     st.markdown(f"<span style='color: #888888; font-size: 0.85rem;'>{chef.experience.value.upper()}</span>", unsafe_allow_html=True)
@@ -225,7 +214,6 @@ def _render_chef_status(restaurant: Restaurant, scheduler: EventScheduler) -> No
 def render_resource_status(restaurant: Restaurant, scheduler: EventScheduler, save_callback) -> None:
     now = datetime.now()
     
-    # Liberación automática de recursos expirados
     for event in list(scheduler.scheduled_events):
         if event.end_time < now:
             table = restaurant.tables.get(event.table_id)
@@ -255,7 +243,6 @@ def render_event_timeline(scheduler: EventScheduler, save_callback) -> None:
         events_data = []
         now = datetime.now()
         
-        # Mapear los eventos a un DataFrame para un despliegue profesional
         for event in scheduler.scheduled_events:
             chef = scheduler.restaurant.employees.get(event.assigned_chef_id)
             table = scheduler.restaurant.tables.get(event.table_id)
@@ -273,14 +260,12 @@ def render_event_timeline(scheduler: EventScheduler, save_callback) -> None:
             })
             
         df = pd.DataFrame(events_data)
-        
-        # Renderizar la tabla de datos estructurada e interactiva nativa de Streamlit
         st.dataframe(
             df, 
-            use_container_width=True, 
+            width='stretch',   # antes use_container_width=True
             hide_index=True,
             column_config={
                 "Comanda": st.column_config.TextColumn("ID Comanda"),
-                "Estado": st.column_config.TextColumn("Estado del Proceso", help="Estado en tiempo real según el reloj del sistema")
+                "Estado": st.column_config.TextColumn("Estado del Proceso", help="Estado en tiempo real del sistema")
             }
         )

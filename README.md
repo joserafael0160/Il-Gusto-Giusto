@@ -1,99 +1,245 @@
-# 🍕 Il Gusto Giusto – Sistema Inteligente de Gestión de Restaurantes
 
-**Planificador Inteligente de Eventos** aplicado a un restaurante italiano de alto nivel.
+<a id="top"></a>
 
-## 📖 Dominio y justificación
+<div align="center">
+  <img src="https://img.icons8.com/color/96/pizza.png" alt="Pizza">
+  <img src="https://img.icons8.com/color/96/spaghetti.png" alt="Pasta">
+  <img src="https://img.icons8.com/color/96/italy.png" alt="Bandera Italia">
+  <h1>Il Gusto Giusto</h1>
+  <p><em>Sistema de Gestión de Restaurante Italiano</em></p>
+</div>
 
-Il Gusto Giusto es un restaurante gourmet especializado en cocina italiana tradicional.  
-Los **eventos** son los **pedidos de los clientes**; los **recursos** son las **mesas**, los **chefs** y los **ingredientes**.  
-Cada pedido tiene una duración (tiempo de preparación) y consume recursos finitos que no pueden solaparse.
+<p align="center">
+  <a href="#">
+    <img src="https://img.shields.io/badge/made%20with-passione-E760A4.svg" alt="Hecho con pasión">
+  </a>
+  <a href="https://opensource.org/licenses/MIT" target="_blank">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Licencia">
+  </a>
+  <a href="https://www.python.org/downloads/" target="_blank">
+    <img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python 3.12+">
+  </a>
+</p>
 
-El sistema no solo gestiona las órdenes, sino que controla todo el flujo del restaurante: menú, contrataciones, compras y finanzas, cumpliendo el modelo de planificador de eventos con restricciones personalizadas.
+<div align="center">
+  <a href="#-acerca-del-proyecto">Acerca del Proyecto</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-características">Características</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-arquitectura">Arquitectura</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-tecnologías">Tecnologías</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-cómo-empezar">Cómo Empezar</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-instrucciones-de-uso">Instrucciones de Uso</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-restricciones-del-dominio">Restricciones</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-pruebas">Pruebas</a>
+  <span>&nbsp;✦&nbsp;</span>
+  <a href="#-licencia">Licencia</a>
+</div>
 
-## 🧠 Restricciones de dominio implementadas
+<br>
 
-### 1. Co‑requisito (Inclusión)
-- **Categoría `truffle_specialty`** → Obliga a tener **Olio al Tartufo** en stock.  
-  _Ejemplo:_ No se puede preparar "Tagliatelle al Tartufo" si no hay aceite de trufa en la despensa.
+## 📜 Acerca Del Proyecto
 
-### 2. Exclusión Mutua
-- **Categoría `seafood`** no puede combinarse con **`cheese_heavy`** en el mismo pedido.  
-  _Regla cultural italiana:_ No se mezclan mariscos con quesos fuertes como el Gorgonzola.
+**Il Gusto Giusto** es un sistema inteligente de gestión para restaurantes italianos. Modela un restaurante como un conjunto de recursos limitados (mesas, chefs, ingredientes) y las comandas como **eventos** que consumen dichos recursos en intervalos de tiempo. El sistema garantiza que no haya conflictos de horarios (una mesa o un chef nunca se asignan a dos comandas simultáneas) y que se respeten reglas culinarias tradicionales.
 
-Ambas reglas están modeladas con el patrón **Strategy** (`core/constraints.py`) y se validan automáticamente al crear un pedido.
+El proyecto fue desarrollado aplicando principios SOLID, arquitectura modular, buenas prácticas de Python y una interfaz profesional con Streamlit.
 
-## 🚀 Funcionalidades (Fases)
+## 💬 Características
 
-| Fase | Pestaña | Descripción |
-|------|---------|-------------|
-| 1 | **Servicio (Dashboard)** | Ver mesas ocupadas/libres, tomar comandas, quitar ingredientes opcionales, asignar chefs automáticamente respetando especialidades y disponibilidad. |
-| 2 | **Gestión del Menú** | Añadir, editar y eliminar platos, definir ingredientes base/opcionales y categorías. |
-| 3 | **Contrataciones (Staff)** | Ver empleados activos, despedir. Bolsa de trabajo inteligente: prioriza candidatos del rol que más falta al restaurante (cálculo automático de déficit). |
-| 4 | **Compras y Suministros** | Inventario de ingredientes con alertas de stock crítico. Tienda para reabastecer, descontando del balance. Platos bloqueados si falta algún ingrediente. |
-| 5 | **Libro de Contabilidad** | Balance en tiempo real, gráfico de evolución temporal, análisis de rentabilidad por plato con consejos automáticos. |
+- 🕒 **Planificación inteligente**: validación automática de disponibilidad de mesas, chefs, stock de ingredientes y restricciones culinarias.
+- 🔍 **Búsqueda de huecos**: encuentra el siguiente intervalo libre para agendar un pedido sin conflictos.
+- 🍝 **Menú personalizable**: añadir, editar y eliminar platos, con ingredientes base (indispensables) y opcionales.
+- 👥 **Gestión de personal**: contratar y despedir empleados, bolsa de empleo con priorización automática según déficit del restaurante.
+- 📦 **Control de inventario**: alertas de stock crítico y compras a proveedores.
+- 💰 **Contabilidad completa**: balance, gráfico de evolución, libro diario de transacciones y rentabilidad de recetas.
+- ⚙️ **Exportación/importación**: guarda y carga el estado completo del restaurante desde un archivo JSON.
+- 🎨 **Interfaz italiana**: tema oscuro elegante con colores terracota, tipografías *Playfair Display* y *Lato*, y animaciones suaves.
 
-## ⏱️ Motor de planificación
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
 
-- **Planificar evento (`schedule_order`)**: Valida conflicto de mesas, disponibilidad de chef especializado, stock y restricciones. Si todo es correcto, crea un `Event` con intervalo de tiempo definido.
-- **Buscar hueco automático (`find_next_available_slot`)**: Analiza el calendario futuro (cada 5 minutos) hasta encontrar la primera ventana donde mesa y chef estén libres y se cumplan las condiciones.
-- **Cancelar evento**: Libera mesa y chef, revirtiendo estados.
-- **Persistencia**: Todo el estado se guarda en un archivo JSON al finalizar cada operación.
+## 🏗️ Arquitectura
 
-## 🔧 Estructura del código (SOLID)
+El código se organiza en capas modulares que siguen los principios **SOLID**:
 
-src/
-    
-    ├── core/ → Lógica de planificación (scheduler) y restricciones.
+### Capas del sistema
 
-    ├── models/ → Entidades del dominio (dataclasses): Restaurant, Dish, Order, Employee…
-    
-    ├── persistence/ → Manejo de archivos JSON.
-    
-    ├── components/ → Vistas de Streamlit (UI).
-    
-    ├── services/ → Servicios de negocio puros.
-    
-    └── ui/ → Estilos y temas.
+| Capa | Carpeta | Responsabilidad |
+|------|---------|-----------------|
+| **Modelos** | `src/models/` | Entidades del dominio (`Restaurant`, `Employee`, `Dish`, `Event`, etc.) como dataclasses. |
+| **Core** | `src/core/` | Lógica de planificación (`EventScheduler`) y sistema de restricciones extensible. |
+| **Servicios** | `src/services/` | Casos de uso de alto nivel (`RestaurantService`) que orquestan operaciones complejas. |
+| **Persistencia** | `src/persistence/` | Guardado y carga en JSON (`JSONHandler`) con interfaz abstracta para futuros cambios. |
+| **Componentes** | `src/components/` | Vistas de Streamlit para cada pestaña de la interfaz. |
+| **UI** | `src/ui/` | Estilos CSS inyectados y utilidades visuales (fuentes italianas, colores, efectos). |
 
+### Flujo Principal
 
+1. **Inicialización**: carga del estado desde `restaurant_state.json` o `default_config.json`.
+2. **Dashboard**: visualización de mesas y chefs en tiempo real, toma de comandas.
+3. **Validación**: al enviar un pedido, el `EventScheduler` comprueba colisiones, restricciones, stock y asigna chef.
+4. **Persistencia automática**: cada cambio de estado se guarda en disco.
+5. **Administración**: pestañas independientes para menú, personal, suministros y contabilidad.
+6. **Configuración**: exportar, importar o reiniciar el estado del restaurante.
 
-- **Principio de responsabilidad única**: Cada módulo tiene una tarea bien definida.
-- **Abierto/Cerrado**: Las restricciones se añaden implementando `Constraint` sin modificar el scheduler.
-- **Sustitución de Liskov**: Las subclases de `Constraint` son intercambiables.
-- **Segregación de interfaces**: `ConstraintValidator` solo expone `validate()`.
-- **Inversión de dependencias**: `EventScheduler` depende de la abstracción `Constraint`, no de implementaciones concretas.
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
 
-## ▶️ Cómo ejecutar el proyecto desde cero
+## 🧰 Tecnologías
 
-1. Clona el repositorio e instala dependencias:
-   ```bash
-   git clone <tu-repo>
-   cd Il_Gusto_Giusto
-   pip install -r requirements.txt
-Asegúrate de que el directorio data/ contenga default_config.json (incluido en el repo).
+- [**Python**](https://www.python.org/): lenguaje principal del proyecto.
+- [**Streamlit**](https://streamlit.io/): framework para la interfaz web interactiva.
+- [**Pandas**](https://pandas.pydata.org/): manipulación y visualización de datos en tablas y gráficos.
+- [**Pytest**](https://docs.pytest.org/): framework de pruebas unitarias.
+- **CSS inyectado**: estilizado personalizado del tema oscuro italiano.
+- **Dataclasses** y **Enums**: modelado limpio de entidades.
+- **Módulo `json`**: persistencia de datos en formato JSON.
 
-Ejecuta la aplicación:
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
 
-```bash 
+## 🚀 Cómo Empezar
+
+### Requisitos
+
+- Python 3.12 
+- pip (gestor de paquetes de Python)
+
+### Instalación
+
+1. Clona el repositorio:
+```bash
+git clone https://github.com/joserafael0160/Il-Gusto-Giusto.git
+cd Il-Gusto-Giusto
+```
+
+2. Crea un entorno virtual (recomendado):
+```bash
+python -m venv venv
+source venv/bin/activate  
+# En Windows: venv\Scripts\activate
+```
+
+3. Instala las dependencias:
+```bash
+pip install -r requirements.txt
+```
+
+4. Ejecuta la aplicación:
+```bash
 streamlit run main.py
 ```
-La primera vez se cargará la configuración por defecto. Todas las acciones se guardan automáticamente en data/restaurant_state.json.
+
+5. Abre en tu navegador:
+```
+http://localhost:8501
+```
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+## 📋 Instrucciones de Uso
+
+La aplicación tiene **6 pestañas** accesibles desde la barra lateral:
+
+### 1. 🍽️ Servicio (Dashboard)
+- Visualiza el estado de las mesas (🟢 disponible / 🔴 ocupada).
+- Toma una comanda: selecciona platos del menú, cantidades y quita ingredientes opcionales.
+- Busca el próximo hueco disponible para agendar un pedido.
+- Libera mesas y cancela comandas.
+- Observa el estado de los chefs (cocinando / disponible) y sus especialidades.
+
+### 2. 📋 Gestión del Menú
+- **Ver y Editar**: selecciona un plato, visualiza sus ingredientes (indispensables y opcionales), edita precio, tiempo, categoría o ingredientes.
+- **Agregar Nuevo Plato**: crea una receta desde cero, elige ingredientes y márcalos como base si son indispensables.
+
+### 3. 👥 Contrataciones (Staff)
+- **Nómina Activa**: lista de empleados filtrable, muestra sueldo, especialidades y permite despedir (cancelando automáticamente las comandas activas del chef).
+- **Bolsa de Empleo**: candidatos ordenados por prioridad (déficit del rol → experiencia → salario). Contrata o descarta candidatos.
+- **Añadir Candidato**: registra un nuevo postulante con especialidades personalizadas.
+
+### 4. 🛒 Compras y Suministros
+- Alerta de ingredientes por debajo del stock mínimo.
+- Inventario con barras de progreso y badges de estado (agotado, crítico, suficiente).
+- Pedido mayorista: selecciona cantidades, calcula el costo total y procesa la compra (verifica saldo disponible).
+
+### 5. 💰 Libro de Contabilidad
+- **Balance**: KPIs de capital, número de transacciones y último movimiento.
+- **Gráfico de evolución** del saldo en el tiempo.
+- **Libro diario** de transacciones con formato de moneda.
+- **Rentabilidad de recetas**: costo vs precio, márgenes de ganancia y clasificación en platos estrella u oportunidades de mejora.
+
+### 6. ⚙️ Configuración
+- **Exportar**: descarga el estado actual como archivo JSON.
+- **Importar**: carga un archivo JSON y reemplaza el estado del restaurante.
+- **Reiniciar**: vuelve a la configuración por defecto.
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+## 🧠 Restricciones del Dominio
+
+El sistema implementa dos restricciones personalizadas que reflejan la tradición culinaria italiana:
+
+### 🔴 Exclusión Mutua – «Mar y Queso»
+No se permite combinar platos de las categorías `seafood` (mariscos) y `cheese_heavy` (quesos fuertes) en una misma comanda.
+> *Ejemplo: no se pueden pedir **Spaghetti ai Frutti di Mare** y **Gnocchi al Gorgonzola** juntos.*
+
+### 🟢 Co‑requisito – «Soporte de Trufa»
+Los platos de la categoría `truffle_specialty` solo pueden prepararse si existe **aceite de trufa** en el inventario.
+> *Ejemplo: si el stock de `truffle_oil` es 0, el plato **Tagliatelle al Tartufo** queda deshabilitado.*
+
+Ambas reglas se validan automáticamente al enviar una comanda y durante la búsqueda de huecos.
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
 
 ## 🧪 Pruebas
-Ejecuta todas las pruebas con:
 
-``` bash
-pytest tests/
+El proyecto incluye una batería de **tests unitarios** con `pytest` en la carpeta `tests/`. Para ejecutarlos:
+
+```bash
+pytest
 ```
-Verifica: creación de eventos, colisiones, liberación de recursos, violación de restricciones, co‑requisitos y persistencia.
 
-## 🎨 Personalización visual
-La interfaz utiliza la fuente Playfair Display y una paleta granate/oro para recordar la elegancia italiana.
-Se aplica mediante CSS inyectado en src/ui/styles.py usando únicamente Streamlit.
+Cubren los siguientes escenarios:
 
-## 📦 Tecnologías permitidas
-- Python 3.10+
-- Streamlit
-- Pytest
-- pandas
+- Planificación exitosa y rechazo por mesa ocupada, chef no disponible, plato inexistente, etc.
+- Verificación de stock insuficiente y no consumo de ingredientes opcionales.
+- Cumplimiento y violación de las restricciones de co‑requisito y exclusión mutua.
+- Cancelación de eventos con devolución exacta de ingredientes y reversión contable.
+- Persistencia: guardar y cargar el estado completo del restaurante.
+- Búsqueda del siguiente hueco disponible.
+- Cálculo del déficit de personal por rol.
 
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Sigue estos pasos:
+
+1. Haz un [_fork_](https://github.com/joserafael0160/Il-Gusto-Giusto/fork) del proyecto.
+2. Crea una rama para tu feature (`git checkout -b feature/awesome-feature`).
+3. Haz commit de tus cambios (`git commit -m 'Add awesome feature'`).
+4. Push a la rama (`git push origin feature/awesome-feature`).
+5. Abre un [_pull request_](https://github.com/joserafael0160/Il-Gusto-Giusto/pulls).
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+## 🔑 Licencia
+
+Distribuido bajo licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+## 🙏 Soporte
+
+¿Preguntas o sugerencias? Abre un issue en el repositorio.
+
+No olvides dejar una estrella ⭐️
+
+<p align="right">(<a href="#top">Volver al inicio 🔝</a>)</p>
+
+<br>
+<hr>
+<p align="center">🍝 ¡Buon appetito e buona gestione! 🍝</p>
+<sub><sup>Un proyecto creado por <a href="https://github.com/joserafael0160">@joserafael0160</a></sup></sub>

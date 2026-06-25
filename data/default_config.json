@@ -81,6 +81,86 @@
       "unit": "kg",
       "min_quantity": 0.5,
       "price_per_unit": 10.0
+    },
+    "pepperoni": {
+      "id": "pepperoni",
+      "name": "Pepperoni Italiano",
+      "quantity": 10.0,
+      "unit": "kg",
+      "min_quantity": 2.0,
+      "price_per_unit": 14.0
+    },
+    "bacon": {
+      "id": "bacon",
+      "name": "Bacon / Pancetta",
+      "quantity": 12.0,
+      "unit": "kg",
+      "min_quantity": 2.0,
+      "price_per_unit": 12.0
+    },
+    "eggs": {
+      "id": "eggs",
+      "name": "Uova Fresche",
+      "quantity": 100.0,
+      "unit": "u",
+      "min_quantity": 20.0,
+      "price_per_unit": 0.3
+    },
+    "minced_beef": {
+      "id": "minced_beef",
+      "name": "Carne Macinata di Manzo",
+      "quantity": 15.0,
+      "unit": "kg",
+      "min_quantity": 3.0,
+      "price_per_unit": 10.0
+    },
+    "seafood_mix": {
+      "id": "seafood_mix",
+      "name": "Frutti di Mare Mix",
+      "quantity": 12.0,
+      "unit": "kg",
+      "min_quantity": 2.0,
+      "price_per_unit": 18.0
+    },
+    "gorgonzola": {
+      "id": "gorgonzola",
+      "name": "Gorgonzola D.O.P.",
+      "quantity": 8.0,
+      "unit": "kg",
+      "min_quantity": 1.5,
+      "price_per_unit": 12.0
+    },
+    "mascarpone": {
+      "id": "mascarpone",
+      "name": "Mascarpone Fresco",
+      "quantity": 6.0,
+      "unit": "kg",
+      "min_quantity": 1.0,
+      "price_per_unit": 14.0
+    },
+    "coffee": {
+      "id": "coffee",
+      "name": "Caffé Espresso Blend",
+      "quantity": 5.0,
+      "unit": "kg",
+      "min_quantity": 0.8,
+      "price_per_unit": 18.0
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "name": "Olio d'Oliva Extra Vergine",
+      "quantity": 15.0,
+      "unit": "l",
+      "min_quantity": 3.0,
+      "price_per_unit": 9.0
+    },
+    "garlic": {
+      "id": "garlic",
+      "name": "Aglio",
+      "quantity": 3.0,
+      "unit": "kg",
+      "min_quantity": 0.5,
+      "price_per_unit": 6.0
     }
   },
   "menu": {
@@ -100,6 +180,80 @@
     },
     "d2": {
       "id": "d2",
+      "name": "Pizza Pepperoni",
+      "price": 16.5,
+      "prep_time": 15,
+      "ingredients": {
+        "tomato_sauce": 0.1,
+        "mozzarella": 0.15,
+        "pepperoni": 0.08
+      },
+      "base_ingredients": ["tomato_sauce", "mozzarella"],
+      "category": "pizza",
+      "requires_specialty": "pizza"
+    },
+    "d3": {
+      "id": "d3",
+      "name": "Spaghetti alla Carbonara",
+      "price": 18.5,
+      "prep_time": 20,
+      "ingredients": {
+        "pasta": 0.15,
+        "bacon": 0.1,
+        "eggs": 2.0,
+        "parmigiano": 0.03
+      },
+      "base_ingredients": ["pasta"],
+      "category": "pasta",
+      "requires_specialty": "pasta"
+    },
+    "d4": {
+      "id": "d4",
+      "name": "Lasagna alla Bolognese",
+      "price": 20.0,
+      "prep_time": 25,
+      "ingredients": {
+        "pasta": 0.15,
+        "tomato_sauce": 0.1,
+        "minced_beef": 0.15,
+        "mozzarella": 0.1,
+        "parmigiano": 0.03
+      },
+      "base_ingredients": ["pasta", "tomato_sauce"],
+      "category": "pasta",
+      "requires_specialty": "pasta"
+    },
+    "d5": {
+      "id": "d5",
+      "name": "Spaghetti ai Frutti di Mare",
+      "price": 24.0,
+      "prep_time": 18,
+      "ingredients": {
+        "pasta": 0.15,
+        "seafood_mix": 0.2,
+        "olive_oil": 0.03,
+        "garlic": 0.01
+      },
+      "base_ingredients": ["pasta", "seafood_mix"],
+      "category": "seafood",
+      "requires_specialty": null
+    },
+    "d6": {
+      "id": "d6",
+      "name": "Gnocchi al Gorgonzola",
+      "price": 19.0,
+      "prep_time": 22,
+      "ingredients": {
+        "pasta": 0.2,
+        "gorgonzola": 0.1,
+        "parmigiano": 0.05
+      },
+      "base_ingredients": ["pasta"],
+      "category": "cheese_heavy",
+      "requires_specialty": "pasta"
+    },
+    "d7": {
+      "id": "d7",
       "name": "Tagliatelle al Tartufo",
       "price": 28.0,
       "prep_time": 20,
@@ -111,14 +265,77 @@
       "base_ingredients": ["pasta"],
       "category": "truffle_specialty",
       "requires_specialty": "truffle_specialty"
+    },
+    "d8": {
+      "id": "d8",
+      "name": "Tiramisù Classico",
+      "price": 9.5,
+      "prep_time": 10,
+      "ingredients": {
+        "mascarpone": 0.15,
+        "coffee": 0.05
+      },
+      "base_ingredients": ["mascarpone"],
+      "category": "dessert",
+      "requires_specialty": null
     }
   },
   "tables": {
     "t1": {"id": "t1", "number": 1, "capacity": 2, "is_occupied": false},
     "t2": {"id": "t2", "number": 2, "capacity": 4, "is_occupied": false},
-    "t3": {"id": "t3", "number": 3, "capacity": 6, "is_occupied": false}
+    "t3": {"id": "t3", "number": 3, "capacity": 6, "is_occupied": false},
+    "t4": {"id": "t4", "number": 4, "capacity": 8, "is_occupied": false},
+    "t5": {"id": "t5", "number": 5, "capacity": 2, "is_occupied": false}
   },
-  "active_orders": [],
-  "history": [],
+  "applicants": [
+    {
+      "name": "Alessandro Moretti",
+      "role": "waiter",
+      "experience": "junior",
+      "specialties": [],
+      "daily_wage": 45.0,
+      "bio": "Estudiante con buena actitud, dispuesto a dar el mejor servicio de salón."
+    },
+    {
+      "name": "Giulia Ferrari",
+      "role": "waiter",
+      "experience": "senior",
+      "specialties": [],
+      "daily_wage": 80.0,
+      "bio": "Maître profesional con amplia trayectoria en hostelería gourmet."
+    },
+    {
+      "name": "Vincenzo Romano",
+      "role": "chef",
+      "experience": "senior",
+      "specialties": ["pizza"],
+      "daily_wage": 150.0,
+      "bio": "Maestro Pizzaiolo napolitano certificado. Experto en hornos tradicionales."
+    },
+    {
+      "name": "Francesca Colombo",
+      "role": "chef",
+      "experience": "junior",
+      "specialties": ["pasta"],
+      "daily_wage": 90.0,
+      "bio": "Apasionada de las masas frescas artesanales y salsas tradicionales."
+    },
+    {
+      "name": "Roberto Rossi",
+      "role": "chef",
+      "experience": "senior",
+      "specialties": ["truffle_specialty"],
+      "daily_wage": 160.0,
+      "bio": "Chef especializado en hongos silvestres y aceites infusionados."
+    }
+  ],
+  "history": [
+    {
+      "timestamp": "2026-06-25T10:00:00",
+      "amount": 15000.0,
+      "description": "Capital Inicial de Apertura",
+      "balance_after": 15000.0
+    }
+  ],
   "scheduled_events": []
 }

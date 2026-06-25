@@ -1,20 +1,7 @@
 {
     "name": "Il Gusto Giusto",
-    "balance": 28668.0,
+    "balance": 14239.0,
     "employees": {
-        "e1": {
-            "id": "e1",
-            "name": "Giovanni Rossi",
-            "role": "chef",
-            "experience": "senior",
-            "specialties": [
-                "pizza",
-                "truffle_specialty"
-            ],
-            "daily_wage": 150.0,
-            "is_available": true,
-            "busy_until": null
-        },
         "e2": {
             "id": "e2",
             "name": "Lucia Bianchi",
@@ -25,7 +12,7 @@
             ],
             "daily_wage": 90.0,
             "is_available": false,
-            "busy_until": "2026-06-24T21:33:18.383515"
+            "busy_until": "2026-06-25T17:55:44.368914"
         },
         "e3": {
             "id": "e3",
@@ -37,8 +24,18 @@
             "is_available": true,
             "busy_until": null
         },
-        "emp_ae0153": {
-            "id": "emp_ae0153",
+        "emp_84386f": {
+            "id": "emp_84386f",
+            "name": "Giulia Ferrari",
+            "role": "waiter",
+            "experience": "senior",
+            "specialties": [],
+            "daily_wage": 80.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_480522": {
+            "id": "emp_480522",
             "name": "Vincenzo Romano",
             "role": "chef",
             "experience": "senior",
@@ -49,16 +46,71 @@
             "is_available": true,
             "busy_until": null
         },
-        "emp_5d46f9": {
-            "id": "emp_5d46f9",
-            "name": "diana la tanque",
+        "emp_0b1a04": {
+            "id": "emp_0b1a04",
+            "name": "Alessandro Moretti",
+            "role": "waiter",
+            "experience": "junior",
+            "specialties": [],
+            "daily_wage": 45.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_6b34ce": {
+            "id": "emp_6b34ce",
+            "name": "Francesca Colombo",
             "role": "chef",
-            "experience": "senior",
+            "experience": "junior",
             "specialties": [
-                "pizza",
                 "pasta"
             ],
-            "daily_wage": 1000.0,
+            "daily_wage": 90.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_c64569": {
+            "id": "emp_c64569",
+            "name": "dssdds",
+            "role": "chef",
+            "experience": "junior",
+            "specialties": [],
+            "daily_wage": 75.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_6c0ed0": {
+            "id": "emp_6c0ed0",
+            "name": "dx",
+            "role": "chef",
+            "experience": "junior",
+            "specialties": [
+                "truffle_specialty"
+            ],
+            "daily_wage": 75.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_266182": {
+            "id": "emp_266182",
+            "name": "dgddsf",
+            "role": "chef",
+            "experience": "junior",
+            "specialties": [
+                "pasta"
+            ],
+            "daily_wage": 75.0,
+            "is_available": true,
+            "busy_until": null
+        },
+        "emp_52b093": {
+            "id": "emp_52b093",
+            "name": ",,",
+            "role": "chef",
+            "experience": "junior",
+            "specialties": [
+                "pasta"
+            ],
+            "daily_wage": 75.0,
             "is_available": true,
             "busy_until": null
         }
@@ -74,34 +126,117 @@
             "id": "t2",
             "number": 2,
             "capacity": 4,
-            "is_occupied": true
+            "is_occupied": false
         },
         "t3": {
             "id": "t3",
             "number": 3,
             "capacity": 6,
             "is_occupied": false
+        },
+        "t4": {
+            "id": "t4",
+            "number": 4,
+            "capacity": 8,
+            "is_occupied": true
+        },
+        "t5": {
+            "id": "t5",
+            "number": 5,
+            "capacity": 2,
+            "is_occupied": false
         }
     },
     "menu": {
-        "d1": {
-            "id": "d1",
-            "name": "Pizza Margherita",
-            "price": 14.5,
+        "d2": {
+            "id": "d2",
+            "name": "Pizza Pepperoni",
+            "price": 16.5,
             "prep_time": 15,
             "ingredients": {
                 "tomato_sauce": 0.1,
                 "mozzarella": 0.15,
-                "basil": 0.02
+                "pepperoni": 0.08
             },
             "base_ingredients": [
-                "tomato_sauce"
+                "tomato_sauce",
+                "mozzarella"
             ],
             "category": "pizza",
             "requires_specialty": "pizza"
         },
-        "d2": {
-            "id": "d2",
+        "d3": {
+            "id": "d3",
+            "name": "Spaghetti alla Carbonara",
+            "price": 18.5,
+            "prep_time": 20,
+            "ingredients": {
+                "pasta": 0.15,
+                "bacon": 0.1,
+                "eggs": 2.0,
+                "parmigiano": 0.03
+            },
+            "base_ingredients": [
+                "pasta"
+            ],
+            "category": "pasta",
+            "requires_specialty": "pasta"
+        },
+        "d4": {
+            "id": "d4",
+            "name": "Lasagna alla Bolognese",
+            "price": 20.0,
+            "prep_time": 25,
+            "ingredients": {
+                "pasta": 0.15,
+                "tomato_sauce": 0.1,
+                "minced_beef": 0.15,
+                "mozzarella": 0.1,
+                "parmigiano": 0.03
+            },
+            "base_ingredients": [
+                "pasta",
+                "tomato_sauce"
+            ],
+            "category": "pasta",
+            "requires_specialty": "pasta"
+        },
+        "d5": {
+            "id": "d5",
+            "name": "Spaghetti ai Frutti di Mare",
+            "price": 24.0,
+            "prep_time": 18,
+            "ingredients": {
+                "pasta": 0.15,
+                "seafood_mix": 0.2,
+                "olive_oil": 0.03,
+                "garlic": 0.01
+            },
+            "base_ingredients": [
+                "pasta",
+                "seafood_mix"
+            ],
+            "category": "seafood",
+            "requires_specialty": null
+        },
+        "d6": {
+            "id": "d6",
+            "name": "Gnocchi al Gorgonzola",
+            "price": 19.0,
+            "prep_time": 22,
+            "ingredients": {
+                "pasta": 0.2,
+                "gorgonzola": 0.1,
+                "parmigiano": 0.05
+            },
+            "base_ingredients": [
+                "pasta"
+            ],
+            "category": "cheese_heavy",
+            "requires_specialty": "pasta"
+        },
+        "d7": {
+            "id": "d7",
             "name": "Tagliatelle al Tartufo",
             "price": 28.0,
             "prep_time": 20,
@@ -116,46 +251,41 @@
             "category": "truffle_specialty",
             "requires_specialty": "truffle_specialty"
         },
-        "dish_a64b02": {
-            "id": "dish_a64b02",
-            "name": "pasta a la diana",
+        "d8": {
+            "id": "d8",
+            "name": "Tiramisù Classico",
+            "price": 9.5,
+            "prep_time": 10,
+            "ingredients": {
+                "mascarpone": 0.15,
+                "coffee": 0.05
+            },
+            "base_ingredients": [
+                "mascarpone"
+            ],
+            "category": "dessert",
+            "requires_specialty": null
+        },
+        "dish_f0099d": {
+            "id": "dish_f0099d",
+            "name": "sfsd",
             "price": 12.0,
             "prep_time": 15,
             "ingredients": {
-                "pasta": 0.1,
-                "mozzarella": 0.1,
-                "truffle_oil": 0.1,
-                "tomato_sauce": 0.1
+                "basil": 0.1
             },
             "base_ingredients": [
-                "pasta",
-                "tomato_sauce"
-            ],
-            "category": "pasta",
-            "requires_specialty": "pasta"
-        },
-        "dish_04a9b8": {
-            "id": "dish_04a9b8",
-            "name": "feo",
-            "price": 12.0,
-            "prep_time": 1,
-            "ingredients": {
-                "pasta": 10.0,
-                "truffle_oil": 10.0
-            },
-            "base_ingredients": [
-                "pasta",
-                "truffle_oil"
+                "basil"
             ],
             "category": "pizza",
-            "requires_specialty": null
+            "requires_specialty": "pasta"
         }
     },
     "ingredients": {
         "pasta": {
             "id": "pasta",
             "name": "Pasta Artigianale",
-            "quantity": 22.65,
+            "quantity": 45.7,
             "unit": "kg",
             "min_quantity": 5.0,
             "price_per_unit": 3.0
@@ -163,7 +293,7 @@
         "tomato_sauce": {
             "id": "tomato_sauce",
             "name": "Salsa Pomodoro",
-            "quantity": 39.8,
+            "quantity": 44.9,
             "unit": "l",
             "min_quantity": 8.0,
             "price_per_unit": 2.0
@@ -171,7 +301,7 @@
         "mozzarella": {
             "id": "mozzarella",
             "name": "Mozzarella di Bufala",
-            "quantity": 14.8,
+            "quantity": 14.9,
             "unit": "kg",
             "min_quantity": 3.0,
             "price_per_unit": 8.0
@@ -179,7 +309,7 @@
         "truffle_oil": {
             "id": "truffle_oil",
             "name": "Olio al Tartufo",
-            "quantity": 0.75,
+            "quantity": 5.0,
             "unit": "l",
             "min_quantity": 1.0,
             "price_per_unit": 45.0
@@ -187,7 +317,7 @@
         "parmigiano": {
             "id": "parmigiano",
             "name": "Parmigiano Reggiano",
-            "quantity": 9.95,
+            "quantity": 9.97,
             "unit": "kg",
             "min_quantity": 2.0,
             "price_per_unit": 15.0
@@ -195,143 +325,219 @@
         "basil": {
             "id": "basil",
             "name": "Basilico Fresco",
-            "quantity": 5.999999999999999,
+            "quantity": 4.0,
             "unit": "kg",
             "min_quantity": 0.5,
             "price_per_unit": 10.0
+        },
+        "pepperoni": {
+            "id": "pepperoni",
+            "name": "Pepperoni Italiano",
+            "quantity": 10.0,
+            "unit": "kg",
+            "min_quantity": 2.0,
+            "price_per_unit": 14.0
+        },
+        "bacon": {
+            "id": "bacon",
+            "name": "Bacon / Pancetta",
+            "quantity": 12.0,
+            "unit": "kg",
+            "min_quantity": 2.0,
+            "price_per_unit": 12.0
+        },
+        "eggs": {
+            "id": "eggs",
+            "name": "Uova Fresche",
+            "quantity": 100.0,
+            "unit": "u",
+            "min_quantity": 20.0,
+            "price_per_unit": 0.3
+        },
+        "minced_beef": {
+            "id": "minced_beef",
+            "name": "Carne Macinata di Manzo",
+            "quantity": 14.85,
+            "unit": "kg",
+            "min_quantity": 3.0,
+            "price_per_unit": 10.0
+        },
+        "seafood_mix": {
+            "id": "seafood_mix",
+            "name": "Frutti di Mare Mix",
+            "quantity": 11.8,
+            "unit": "kg",
+            "min_quantity": 2.0,
+            "price_per_unit": 18.0
+        },
+        "gorgonzola": {
+            "id": "gorgonzola",
+            "name": "Gorgonzola D.O.P.",
+            "quantity": 10.0,
+            "unit": "kg",
+            "min_quantity": 1.5,
+            "price_per_unit": 12.0
+        },
+        "mascarpone": {
+            "id": "mascarpone",
+            "name": "Mascarpone Fresco",
+            "quantity": 8.0,
+            "unit": "kg",
+            "min_quantity": 1.0,
+            "price_per_unit": 14.0
+        },
+        "coffee": {
+            "id": "coffee",
+            "name": "Caffé Espresso Blend",
+            "quantity": 5.0,
+            "unit": "kg",
+            "min_quantity": 0.8,
+            "price_per_unit": 18.0
+        },
+        "olive_oil": {
+            "id": "olive_oil",
+            "name": "Olio d'Oliva Extra Vergine",
+            "quantity": 16.97,
+            "unit": "l",
+            "min_quantity": 3.0,
+            "price_per_unit": 9.0
+        },
+        "garlic": {
+            "id": "garlic",
+            "name": "Aglio",
+            "quantity": 4.99,
+            "unit": "kg",
+            "min_quantity": 0.5,
+            "price_per_unit": 6.0
         }
     },
     "history": [
         {
-            "timestamp": "2026-06-24T20:58:32.851802",
+            "timestamp": "2026-06-25T10:00:00",
             "amount": 15000.0,
             "description": "Capital Inicial de Apertura",
-            "balance_after": 30000.0
+            "balance_after": 15000.0
         },
         {
-            "timestamp": "2026-06-24T21:00:21.138984",
-            "amount": 14.5,
-            "description": "Venta de Comanda ORD-16C6 en Mesa 1",
-            "balance_after": 30014.5
+            "timestamp": "2026-06-25T17:11:50.643538",
+            "amount": -26.0,
+            "description": "Compra de suministros: 1.0 kg de Gorgonzola D.O.P., 1.0 kg de Mascarpone Fresco",
+            "balance_after": 14974.0
         },
         {
-            "timestamp": "2026-06-24T21:01:46.643052",
-            "amount": 14.5,
-            "description": "Venta de Comanda ORD-55DF en Mesa 2",
-            "balance_after": 30029.0
+            "timestamp": "2026-06-25T17:12:07.858576",
+            "amount": -39.0,
+            "description": "Compra de suministros: 1.0 kg de Pasta Artigianale, 2.0 l de Salsa Pomodoro, 1.0 kg de Gorgonzola D.O.P., 1.0 kg de Mascarpone Fresco, 1.0 kg de Aglio",
+            "balance_after": 14935.0
         },
         {
-            "timestamp": "2026-06-24T21:05:01.557413",
-            "amount": 24.0,
-            "description": "Venta de Comanda ORD-99DE en Mesa 3",
-            "balance_after": 30053.0
+            "timestamp": "2026-06-25T17:13:25.500481",
+            "amount": -6.0,
+            "description": "Compra de suministros: 2.0 kg de Pasta Artigianale",
+            "balance_after": 14929.0
         },
         {
-            "timestamp": "2026-06-24T21:07:09.981365",
+            "timestamp": "2026-06-25T17:20:51.961085",
+            "amount": -6.0,
+            "description": "Compra de suministros: 3.0 l de Salsa Pomodoro",
+            "balance_after": 14923.0
+        },
+        {
+            "timestamp": "2026-06-25T17:28:54.472391",
+            "amount": -24.0,
+            "description": "Compra de suministros: 2.0 l de Olio d'Oliva Extra Vergine, 1.0 kg de Aglio",
+            "balance_after": 14899.0
+        },
+        {
+            "timestamp": "2026-06-25T17:29:09.051574",
+            "amount": -6.0,
+            "description": "Compra de suministros: 2.0 kg de Pasta Artigianale",
+            "balance_after": 14893.0
+        },
+        {
+            "timestamp": "2026-06-25T17:29:23.714815",
+            "amount": -33.0,
+            "description": "Compra de suministros: 11.0 kg de Pasta Artigianale",
+            "balance_after": 14860.0
+        },
+        {
+            "timestamp": "2026-06-25T17:30:14.771717",
+            "amount": -80.0,
+            "description": "Contratación de Giulia Ferrari",
+            "balance_after": 14780.0
+        },
+        {
+            "timestamp": "2026-06-25T17:30:15.686808",
             "amount": -150.0,
             "description": "Contratación de Vincenzo Romano",
-            "balance_after": 29903.0
+            "balance_after": 14630.0
         },
         {
-            "timestamp": "2026-06-24T21:08:38.360140",
-            "amount": -1000.0,
-            "description": "Contratación de diana la tanque",
-            "balance_after": 28903.0
+            "timestamp": "2026-06-25T17:30:16.296631",
+            "amount": -45.0,
+            "description": "Contratación de Alessandro Moretti",
+            "balance_after": 14585.0
         },
         {
-            "timestamp": "2026-06-24T21:10:40.290292",
-            "amount": -29.0,
-            "description": "Compra de suministros: 3.0 kg de Pasta Artigianale, 2.0 kg de Basilico Fresco",
-            "balance_after": 28874.0
+            "timestamp": "2026-06-25T17:30:30.041542",
+            "amount": -90.0,
+            "description": "Contratación de Francesca Colombo",
+            "balance_after": 14495.0
         },
         {
-            "timestamp": "2026-06-24T21:12:35.738344",
-            "amount": -270.0,
-            "description": "Compra de suministros: 6.0 l de Olio al Tartufo",
-            "balance_after": 28604.0
+            "timestamp": "2026-06-25T17:30:31.805613",
+            "amount": -75.0,
+            "description": "Contratación de dssdds",
+            "balance_after": 14420.0
         },
         {
-            "timestamp": "2026-06-24T21:12:44.255221",
-            "amount": 12.0,
-            "description": "Venta de Comanda ORD-91DA en Mesa 1",
-            "balance_after": 28616.0
+            "timestamp": "2026-06-25T17:30:32.962726",
+            "amount": -75.0,
+            "description": "Contratación de dx",
+            "balance_after": 14345.0
         },
         {
-            "timestamp": "2026-06-24T21:17:07.358815",
-            "amount": 40.0,
-            "description": "Venta de Comanda ORD-21AB en Mesa 1",
-            "balance_after": 28656.0
+            "timestamp": "2026-06-25T17:30:35.391843",
+            "amount": -75.0,
+            "description": "Contratación de dgddsf",
+            "balance_after": 14270.0
         },
         {
-            "timestamp": "2026-06-24T21:18:18.383590",
-            "amount": 12.0,
-            "description": "Venta de Comanda ORD-EB61 en Mesa 2",
-            "balance_after": 28668.0
+            "timestamp": "2026-06-25T17:30:36.969420",
+            "amount": -75.0,
+            "description": "Contratación de ,,",
+            "balance_after": 14195.0
+        },
+        {
+            "timestamp": "2026-06-25T17:30:44.369018",
+            "amount": 44.0,
+            "description": "Venta de Comanda ORD-76A7 en Mesa 4",
+            "balance_after": 14239.0
         }
     ],
     "applicants": [
         {
-            "name": "Alessandro Moretti",
-            "role": "waiter",
-            "experience": "junior",
-            "specialties": [],
-            "daily_wage": 45.0,
-            "bio": "Estudiante con buena actitud, dispuesto a dar el mejor servicio de salón."
-        },
-        {
-            "name": "Giulia Ferrari",
-            "role": "waiter",
-            "experience": "senior",
-            "specialties": [],
-            "daily_wage": 80.0,
-            "bio": "Maître profesional con amplia trayectoria en hostelería gourmet."
-        },
-        {
-            "name": "Francesca Colombo",
+            "name": "Roberto Rossi",
             "role": "chef",
-            "experience": "junior",
+            "experience": "senior",
             "specialties": [
-                "pasta"
+                "truffle_specialty"
             ],
-            "daily_wage": 90.0,
-            "bio": "Apasionada de las masas frescas artesanales y salsas tradicionales."
+            "daily_wage": 160.0,
+            "bio": "Chef especializado en hongos silvestres y aceites infusionados."
         }
     ],
     "scheduled_events": [
         {
-            "id": "evt_8febbd65",
-            "order_id": "ORD-91DA",
-            "table_id": "t1",
-            "assigned_chef_id": "e1",
-            "start_time": "2026-06-24T21:12:44.255131",
-            "end_time": "2026-06-24T21:13:44.255131",
-            "dishes": {
-                "dish_04a9b8": 1
-            },
-            "customized_removals": {}
-        },
-        {
-            "id": "evt_0d2acc7d",
-            "order_id": "ORD-21AB",
-            "table_id": "t1",
-            "assigned_chef_id": "e1",
-            "start_time": "2026-06-24T21:17:07.358728",
-            "end_time": "2026-06-24T21:37:07.358728",
-            "dishes": {
-                "dish_a64b02": 1,
-                "d2": 1
-            },
-            "customized_removals": {}
-        },
-        {
-            "id": "evt_74e39128",
-            "order_id": "ORD-EB61",
-            "table_id": "t2",
+            "id": "evt_99705b82",
+            "order_id": "ORD-76A7",
+            "table_id": "t4",
             "assigned_chef_id": "e2",
-            "start_time": "2026-06-24T21:18:18.383515",
-            "end_time": "2026-06-24T21:33:18.383515",
+            "start_time": "2026-06-25T17:30:44.368914",
+            "end_time": "2026-06-25T17:55:44.368914",
             "dishes": {
-                "dish_a64b02": 1
+                "d4": 1,
+                "d5": 1
             },
             "customized_removals": {}
         }

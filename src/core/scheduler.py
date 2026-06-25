@@ -1,6 +1,7 @@
+# src/core/scheduler.py
 import uuid
 from datetime import datetime, timedelta
-from typing import Tuple, Optional, List, Dict
+from typing import Tuple, Optional, List, Dict, Any
 
 from src.models.restaurant import Restaurant, Order, EmployeeRole, Dish
 from src.models.events import Event
@@ -13,6 +14,7 @@ class EventScheduler:
         self.validator = ConstraintValidator()
 
     def schedule_order(self, order: Order, start_time: datetime) -> Tuple[bool, str, Optional[Event]]:
+        """Handles scheduling validation, resource checks, and updates state upon success."""
         table = self.restaurant.tables.get(order.table_id)
         if not table:
             return False, "Mesa inválida", None
@@ -32,33 +34,32 @@ class EventScheduler:
                 if dish.requires_specialty:
                     required_specialty = dish.requires_specialty
 
-        # Rechazar pedidos sin platos seleccionados
         if not ordered_dishes_objs:
             return False, "Debe seleccionar al menos un plato con cantidad mayor a cero.", None
 
         duration = timedelta(minutes=max_prep_time)
         end_time = start_time + duration
 
-        # 1. Colisión de mesa
+        # 1. Resource collision: Table occupied
         if not self._is_resource_free(table.id, start_time, end_time, "table"):
             return False, f"La mesa {table.number} ya está reservada u ocupada en ese intervalo.", None
 
-        # 2. Restricciones del dominio
+        # 2. Domain Constraints check
         valid, msg = self.validator.validate(ordered_dishes_objs, self.restaurant.ingredients)
         if not valid:
             return False, msg, None
 
-        # 3. Stock (considerando opcionales)
+        # 3. Pantry Stock check
         stock_ok, stock_msg = self._check_ingredients_stock(order)
         if not stock_ok:
             return False, stock_msg, None
 
-        # 4. Chef calificado libre
+        # 4. Chef Assignment check
         chef = self._find_available_chef(start_time, end_time, required_specialty)
         if not chef:
             return False, "No hay chefs calificados o libres para preparar este pedido en el horario solicitado.", None
 
-        # 5. Éxito: descontar stock, crear evento, actualizar estados
+        # 5. Success: Deduct pantry resources, assign event, adjust states
         self._subtract_stock(order)
 
         event = Event(
@@ -68,8 +69,8 @@ class EventScheduler:
             assigned_chef_id=chef.id,
             start_time=start_time,
             end_time=end_time,
-            dishes=order.dishes,                       # Trazabilidad de lo pedido
-            customized_removals=order.customized_removals  # Trazabilidad de omisiones
+            dishes=order.dishes,
+            customized_removals=order.customized_removals
         )
         self.scheduled_events.append(event)
 
@@ -83,6 +84,7 @@ class EventScheduler:
         return True, "Pedido agendado y cocinado exitosamente.", event
 
     def find_next_available_slot(self, order: Order) -> Optional[datetime]:
+        """Finds the next clean interval within 24h where the order has no conflicts."""
         current_search = datetime.now()
         limit = current_search + timedelta(hours=24)
 
@@ -94,12 +96,11 @@ class EventScheduler:
         return None
 
     def cancel_event(self, event_id: str) -> Tuple[bool, str]:
-        """Cancela el evento, libera mesa/chef y devuelve los ingredientes al inventario."""
+        """Releases assigned table and chef, refunds ingredients and money."""
         event = next((e for e in self.scheduled_events if e.id == event_id), None)
         if not event:
             return False, "Evento no encontrado."
 
-        # Liberar mesa y chef
         table = self.restaurant.tables.get(event.table_id)
         if table:
             table.is_occupied = False
@@ -109,7 +110,7 @@ class EventScheduler:
             chef.is_available = True
             chef.busy_until = None
 
-        # 🔄 REEMBOLSO EXACTO DE INGREDIENTES
+        # Precise pantry refund
         for dish_id, qty in event.dishes.items():
             dish = self.restaurant.menu.get(dish_id)
             if not dish:
@@ -117,9 +118,13 @@ class EventScheduler:
             removed = event.customized_removals.get(dish_id, [])
             for ing_id, amt in dish.ingredients.items():
                 if ing_id in removed:
-                    continue  # No se consumió, no se devuelve
+                    continue
                 if ing_id in self.restaurant.ingredients:
                     self.restaurant.ingredients[ing_id].quantity += (amt * qty)
+
+        # ✅ Revertir el ingreso económico
+        revenue = sum(self.restaurant.menu[d_id].price * qty for d_id, qty in event.dishes.items())
+        self.restaurant.add_transaction(-revenue, f"Reembolso por cancelación de Comanda {event.order_id}")
 
         self.scheduled_events.remove(event)
         return True, "Evento cancelado y recursos devueltos con éxito al inventario."
@@ -167,7 +172,7 @@ class EventScheduler:
                     return False
         return True
 
-    def _find_available_chef(self, start: datetime, end: datetime, specialty: Optional[str] = None):
+    def _find_available_chef(self, start: datetime, end: datetime, specialty: Optional[str] = None) -> Optional[Any]:
         for chef in self.restaurant.employees.values():
             if chef.role == EmployeeRole.CHEF:
                 if specialty and specialty not in chef.specialties:
@@ -195,7 +200,7 @@ class EventScheduler:
                 return False, f"Stock insuficiente del ingrediente: {name}."
         return True, ""
 
-    def _subtract_stock(self, order: Order):
+    def _subtract_stock(self, order: Order) -> None:
         for dish_id, qty in order.dishes.items():
             dish = self.restaurant.menu.get(dish_id)
             if not dish:
